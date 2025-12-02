@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #059669;
+  /* Emerald 600 - More vibrant */
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #022c22;
+  /* Emerald 950 - Deep contrast */
+  --color-secondary-foreground: #FFFFFF;
+  --color-accent: #fbbf24;
+  /* Amber 400 - Warm pop */
+  --color-accent-foreground: #000000;
+  --color-background: #f0fdf4;
+  --color-foreground: #022c22;
+
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f0fdf4;
+  --foreground: #022c22;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), sans-serif;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(251, 191, 36, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(5, 150, 105, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: -0.02em;
+}
+
+@utility container-mobile {
+  @apply px-4 py-6 md:px-6 md:py-8 max-w-7xl mx-auto w-full;
+}
+
+@utility card-mobile {
+  @apply p-5 md:p-8 rounded-3xl;
 }

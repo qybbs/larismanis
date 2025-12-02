@@ -1,65 +1,155 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { ArrowRight, Sparkles, Calendar, MessageSquare } from "lucide-react";
+import { motion } from "framer-motion";
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 50
+    }
+  },
+};
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen bg-secondary relative overflow-hidden font-sans selection:bg-primary selection:text-white">
+      {/* Background Gradients */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-primary/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-accent/10 rounded-full blur-[120px] animate-pulse delay-1000" />
+      </div>
+
+      <div className="relative z-10 flex flex-col lg:flex-row min-h-screen">
+        {/* Hero Section */}
+        <section className="flex-1 flex flex-col justify-center px-6 pt-12 pb-8 lg:p-20 text-white lg:max-w-[50vw]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="space-y-6 max-w-lg w-full"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-md w-fit">
+              <Sparkles className="w-3 h-3 text-accent" />
+              <span className="text-xs font-medium text-accent">AI Marketing Assistant</span>
+            </div>
+
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.9]">
+              Laris<span className="text-primary italic">Manis</span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-white/70 leading-relaxed max-w-md">
+              Asisten digital instan buat usahamu makin cuan. <span className="text-white font-medium">Gak pake ribet.</span>
+            </p>
+
+            <div className="hidden lg:flex gap-4 pt-4">
+              <div className="flex -space-x-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-secondary bg-gray-300" />
+                ))}
+              </div>
+              <p className="text-sm text-white/50 self-center">Dipercaya 1000+ UMKM</p>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Tools Menu Sheet */}
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.2 }}
+          className="bg-background rounded-t-[2.5rem] lg:rounded-l-[3rem] lg:rounded-tr-none shadow-[0_-10px_40px_rgba(0,0,0,0.2)] min-h-[60vh] lg:min-h-screen lg:w-[50vw] p-6 md:p-10 lg:p-16 pb-12 flex flex-col justify-center"
+        >
+          <div className="max-w-xl mx-auto space-y-8 w-full">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl md:text-3xl font-bold text-secondary">Tools Sakti</h2>
+              <span className="text-xs font-medium text-secondary/40 bg-secondary/5 px-3 py-1 rounded-full">v1.0</span>
+            </div>
+
+            <div className="grid gap-4">
+              {/* Feature A: Magic Content */}
+              <Link href="/generate" className="group">
+                <div className="bg-white p-5 md:p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-center gap-5 relative overflow-hidden">
+                  <div className="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150" />
+
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                    <Sparkles className="w-7 h-7 md:w-8 md:h-8" />
+                  </div>
+
+                  <div className="flex-1 z-10">
+                    <h3 className="text-lg md:text-xl font-bold text-secondary leading-tight mb-1">Magic Content</h3>
+                    <p className="text-xs md:text-sm text-secondary/60 line-clamp-2">Bikin poster iklan & caption otomatis dari foto.</p>
+                  </div>
+
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-primary group-hover:text-white transition-colors">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </Link>
+
+              {/* Feature B: Campaign Planner */}
+              <Link href="/plan" className="group">
+                <div className="bg-white p-5 md:p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-center gap-5 relative overflow-hidden">
+                  <div className="absolute right-0 top-0 w-24 h-24 bg-accent/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150" />
+
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-accent/10 flex items-center justify-center text-amber-600 group-hover:bg-accent group-hover:text-black transition-colors">
+                    <Calendar className="w-7 h-7 md:w-8 md:h-8" />
+                  </div>
+
+                  <div className="flex-1 z-10">
+                    <h3 className="text-lg md:text-xl font-bold text-secondary leading-tight mb-1">Campaign Planner</h3>
+                    <p className="text-xs md:text-sm text-secondary/60 line-clamp-2">Jadwal konten mingguan instan anti pusing.</p>
+                  </div>
+
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-accent group-hover:text-black transition-colors">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </Link>
+
+              {/* Feature C: Consultant */}
+              <Link href="/consult" className="group">
+                <div className="bg-white p-5 md:p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-center gap-5 relative overflow-hidden">
+                  <div className="absolute right-0 top-0 w-24 h-24 bg-secondary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150" />
+
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+                    <MessageSquare className="w-7 h-7 md:w-8 md:h-8" />
+                  </div>
+
+                  <div className="flex-1 z-10">
+                    <h3 className="text-lg md:text-xl font-bold text-secondary leading-tight mb-1">Consultant</h3>
+                    <p className="text-xs md:text-sm text-secondary/60 line-clamp-2">Curhat strategi bisnis & dapat solusi jitu.</p>
+                  </div>
+
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-secondary group-hover:text-white transition-colors">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            <footer className="pt-8 text-center lg:text-left">
+              <p className="text-xs text-secondary/30 font-medium">&copy; {new Date().getFullYear()} LarisManis. Growth Green Theme.</p>
+            </footer>
+          </div>
+        </motion.div>
+      </div>
+    </main>
   );
 }
