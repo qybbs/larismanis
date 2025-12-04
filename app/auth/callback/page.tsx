@@ -22,7 +22,7 @@ export default function AuthCallbackPage() {
       }
       
       // Redirect to home or dashboard after handling auth
-      router.push('/');
+      router.push('/dashboard');
     };
 
     handleAuthCallback();

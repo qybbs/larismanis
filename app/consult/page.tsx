@@ -135,7 +135,7 @@ export default function ConsultPage() {
             <div className="space-y-4 md:space-y-8 flex-shrink-0 pt-2 pb-2">
                 <header className="flex items-center gap-3 md:gap-4">
                     <Link
-                        href="/"
+                        href="/dashboard"
                         className="p-2 -ml-2 hover:bg-emerald-100 active:bg-emerald-200 rounded-full transition-colors text-secondary"
                     >
                         <ArrowLeft className="w-6 h-6" />

@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, Loader2, Mail, Lock, ArrowRight } from "lucide-react";
+import { Sparkles, Loader2, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -32,30 +33,29 @@ export default function LoginPage() {
     }
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Dummy User Logic
-    if (email === "demo@example.com" && password === "demo123") {
-      // Simulate login delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push("/dashboard");
-      return;
-    }
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
       });
 
       if (error) throw error;
       
-      router.push("/dashboard");
+      alert('Registration successful! Please check your email to verify your account.');
+      router.push("/");
     } catch (error) {
-      console.error('Error logging in:', error);
-      alert('Invalid login credentials.');
+      console.error('Error registering:', error);
+      alert('Error registering. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -87,12 +87,12 @@ export default function LoginPage() {
             </h1>
 
             <p className="text-lg md:text-xl text-white/70 leading-relaxed max-w-md">
-              Masuk sekarang dan biarkan AI membantu bisnismu tumbuh lebih cepat.
+              Bergabunglah dengan ribuan UMKM yang telah sukses bersama kami.
             </p>
           </motion.div>
         </section>
 
-        {/* Login Form (Right) */}
+        {/* Register Form (Right) */}
         <motion.div
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
@@ -101,8 +101,8 @@ export default function LoginPage() {
         >
           <div className="max-w-md mx-auto w-full space-y-8">
             <div className="text-center lg:text-left">
-              <h2 className="text-3xl font-bold text-secondary mb-2">Selamat Datang Kembali</h2>
-              <p className="text-secondary/60">Masuk ke akun LarisManis kamu.</p>
+              <h2 className="text-3xl font-bold text-secondary mb-2">Buat Akun Baru</h2>
+              <p className="text-secondary/60">Mulai perjalanan suksesmu hari ini.</p>
             </div>
 
             <div className="space-y-4">
@@ -134,7 +134,7 @@ export default function LoginPage() {
                     />
                   </svg>
                 )}
-                <span>Masuk dengan Google</span>
+                <span>Daftar dengan Google</span>
               </button>
 
               <div className="relative flex items-center py-2">
@@ -143,8 +143,23 @@ export default function LoginPage() {
                 <div className="flex-grow border-t border-gray-200"></div>
               </div>
 
-              {/* Email Login Form */}
-              <form onSubmit={handleEmailLogin} className="space-y-4">
+              {/* Register Form */}
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-secondary/80">Nama Lengkap</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Nama Lengkap"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-secondary/80">Email</label>
                   <div className="relative">
@@ -161,10 +176,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-sm font-medium text-secondary/80">Password</label>
-                    <a href="#" className="text-xs text-primary hover:underline">Lupa password?</a>
-                  </div>
+                  <label className="text-sm font-medium text-secondary/80">Password</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
@@ -187,7 +199,7 @@ export default function LoginPage() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      Masuk
+                      Daftar
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -196,9 +208,9 @@ export default function LoginPage() {
             </div>
 
             <div className="text-center text-sm text-secondary/60">
-              Belum punya akun?{' '}
-              <Link href="/register" className="text-primary font-medium hover:underline">
-                Daftar sekarang
+              Sudah punya akun?{' '}
+              <Link href="/" className="text-primary font-medium hover:underline">
+                Masuk disini
               </Link>
             </div>
           </div>

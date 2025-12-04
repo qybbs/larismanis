@@ -68,7 +68,7 @@ export default function PlanPage() {
             <div className="space-y-4 md:space-y-6">
                 <header className="flex items-center gap-3 md:gap-4 pt-2">
                     <Link
-                        href="/"
+                        href="/dashboard"
                         className="p-2 -ml-2 hover:bg-emerald-100 active:bg-emerald-200 rounded-full transition-colors text-secondary"
                     >
                         <ArrowLeft className="w-6 h-6" />
