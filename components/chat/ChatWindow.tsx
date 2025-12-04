@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Send, Bot, Sparkles, Menu } from "lucide-react";
+import { motion } from "framer-motion";
 import ActionSuggestion from "./ActionSuggestion";
 
-interface Message {
+export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
@@ -16,16 +16,15 @@ interface Message {
   };
 }
 
-export default function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Halo! Saya LarisManis. Ada yang bisa saya bantu untuk meningkatkan penjualanmu hari ini?",
-    },
-  ]);
+interface ChatWindowProps {
+  messages: Message[];
+  onSendMessage: (content: string) => void;
+  isTyping: boolean;
+  onToggleSidebar: () => void;
+}
+
+export default function ChatWindow({ messages, onSendMessage, isTyping, onToggleSidebar }: ChatWindowProps) {
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,58 +33,24 @@ export default function ChatWindow() {
     }
   }, [messages, isTyping]);
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    onSendMessage(input);
     setInput("");
-    setIsTyping(true);
-
-    // Mock AI Response Logic
-    setTimeout(() => {
-      let aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Maaf, saya kurang paham. Bisa jelaskan lebih detail?",
-      };
-
-      const lowerInput = userMsg.content.toLowerCase();
-      if (lowerInput.includes("sepi") || lowerInput.includes("turun")) {
-        aiMsg = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Wah, jangan patah semangat! Kalau lagi sepi, biasanya strategi 'Bundle Hemat' atau 'Menu Baru' cukup ampuh. Coba deh bikin poster promo yang menarik.",
-          action: {
-            type: "create_poster",
-            label: "Buat Poster Promo",
-            prompt: "Poster promo makanan bundle hemat diskon menarik",
-          },
-        };
-      } else if (lowerInput.includes("ide") || lowerInput.includes("konten")) {
-        aiMsg = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Untuk ide konten, kamu bisa coba selang-seling antara edukasi produk dan hiburan. Mau saya buatkan jadwal mingguan?",
-        };
-      }
-
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 1500);
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 md:rounded-[2.5rem] md:shadow-2xl md:border md:border-gray-200 overflow-hidden relative font-sans">
+    <div className="flex flex-col h-full overflow-hidden relative font-sans">
       {/* App Header */}
-      <div className="bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between shadow-sm z-20">
+      <div className="px-4 md:px-0 py-4 flex items-center justify-between z-20">
         <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleSidebar}
+            className="md:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-white shadow-md">
               <Bot className="w-6 h-6" />
@@ -100,13 +65,19 @@ export default function ChatWindow() {
             </p>
           </div>
         </div>
-        <button className="p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-400">
+        <button className="p-2 hover:bg-white/50 rounded-full transition-colors text-gray-400">
           <Sparkles className="w-5 h-5" />
         </button>
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-[#e5ddd5]/10" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto px-4 md:px-0 space-y-6" ref={scrollRef}>
+        {messages.length === 0 && (
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-50">
+            <Bot className="w-16 h-16 text-gray-300 mb-4" />
+            <p className="text-gray-500">Mulai percakapan baru dengan LarisManis AI.</p>
+          </div>
+        )}
         {messages.map((msg) => (
           <motion.div
             key={msg.id}
@@ -117,7 +88,7 @@ export default function ChatWindow() {
             <div
               className={`max-w-[85%] p-3.5 rounded-2xl shadow-sm text-[15px] leading-relaxed relative ${msg.role === "user"
                 ? "bg-primary text-white rounded-tr-none"
-                : "bg-white text-gray-800 rounded-tl-none border border-gray-100"
+                : "bg-white text-gray-800 rounded-tl-none shadow-sm"
                 }`}
             >
               <p>{msg.content}</p>
@@ -138,7 +109,7 @@ export default function ChatWindow() {
             animate={{ opacity: 1 }}
             className="flex justify-start"
           >
-            <div className="bg-white border border-gray-100 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex gap-1 items-center">
+            <div className="bg-white px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex gap-1 items-center">
               <span className="text-xs text-gray-400 mr-2">Sedang mengetik</span>
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
               <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-100" />
@@ -149,9 +120,9 @@ export default function ChatWindow() {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-100">
-        <form onSubmit={handleSend} className="flex gap-2 items-end">
-          <div className="flex-1 bg-gray-100 rounded-[1.5rem] px-4 py-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+      <div className="py-4 md:py-6">
+        <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+          <div className="flex-1 bg-white rounded-[1.5rem] px-4 py-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all shadow-sm border border-gray-100">
             <input
               type="text"
               value={input}
@@ -170,5 +141,6 @@ export default function ChatWindow() {
         </form>
       </div>
     </div>
+
   );
 }

@@ -44,17 +44,14 @@ export default function UploadZone({ onFileSelect, isProcessing }: UploadZonePro
 
     return (
         <div
-            className={`relative w-full max-w-2xl mx-auto h-80 md:h-96 rounded-[2.5rem] transition-all duration-500 flex flex-col items-center justify-center overflow-hidden ${isDragging
-                ? "bg-primary/10 scale-[1.02] shadow-[0_0_40px_rgba(16,185,129,0.2)]"
-                : "bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl hover:shadow-2xl hover:bg-white/50"
+            className={`relative w-full max-w-2xl mx-auto min-h-[400px] md:min-h-[500px] rounded-[2.5rem] transition-all duration-500 flex flex-col items-center justify-center overflow-hidden ${isDragging
+                ? "bg-primary/5 scale-[1.02] border-2 border-dashed border-primary"
+                : "hover:bg-white/20 border-2 border-dashed border-transparent hover:border-emerald-100/50"
                 }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            {/* Glass Shine Effect */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/40 via-transparent to-transparent opacity-50 pointer-events-none" />
-
             <AnimatePresence mode="wait">
                 {isProcessing ? (
                     <motion.div
@@ -85,35 +82,35 @@ export default function UploadZone({ onFileSelect, isProcessing }: UploadZonePro
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="flex flex-col items-center space-y-8 text-center p-6 md:p-8 relative z-10"
+                        className="flex flex-col items-center justify-center space-y-6 md:space-y-8 text-center p-4 md:p-8 relative z-10 w-full h-full"
                     >
-                        <div className="relative group">
-                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500" />
-                            <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
-                                <Upload className="w-10 h-10 text-primary group-hover:text-emerald-600 transition-colors" />
+                        <div className="relative group mt-4 md:mt-0">
+                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="relative w-20 h-20 md:w-24 md:h-24 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500 border border-white/50">
+                                <Upload className="w-8 h-8 md:w-10 md:h-10 text-primary/80 group-hover:text-primary transition-colors" />
                             </div>
-                            <div className="absolute -top-2 -right-2 bg-accent text-accent-foreground p-2 rounded-full shadow-lg animate-bounce">
+                            <div className="absolute -top-2 -right-2 bg-white text-primary p-2 rounded-full shadow-sm animate-bounce">
                                 <Sparkles className="w-4 h-4" />
                             </div>
                         </div>
 
-                        <div className="space-y-2 md:space-y-3">
-                            <h3 className="text-2xl md:text-3xl font-bold text-secondary tracking-tight px-4">
+                        <div className="space-y-2 md:space-y-3 max-w-md mx-auto">
+                            <h3 className="text-xl md:text-3xl font-bold text-secondary tracking-tight px-4">
                                 Upload Foto Produk
                             </h3>
-                            <p className="text-sm md:text-base text-secondary/60 max-w-sm mx-auto leading-relaxed px-4">
+                            <p className="text-sm md:text-base text-secondary/60 leading-relaxed px-4">
                                 Tarik & lepas foto di sini, atau klik tombol di bawah.
-                                <br />
-                                <span className="text-sm text-primary font-medium">
+                                <br className="hidden md:block" />
+                                <span className="text-sm text-primary font-medium block mt-1">
                                     Biar AI yang kerjakan sisanya.
                                 </span>
                             </p>
                         </div>
 
-                        <label className="cursor-pointer group relative px-6 md:px-8 py-3.5 md:py-4 bg-primary text-white rounded-xl font-bold shadow-lg overflow-hidden transition-all active:scale-95 md:hover:shadow-primary/30 md:hover:shadow-2xl md:hover:-translate-y-1 text-sm md:text-base">
+                        <label className="cursor-pointer group relative px-8 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 overflow-hidden transition-all active:scale-95 hover:shadow-primary/40 hover:-translate-y-1 mb-4 md:mb-0">
                             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                             <span className="relative flex items-center gap-2 justify-center">
-                                <ImageIcon className="w-4 h-4 md:w-5 md:h-5" />
+                                <ImageIcon className="w-5 h-5" />
                                 Pilih Foto Galeri
                             </span>
                             <input
