@@ -6,7 +6,7 @@ import { useState, useEffect, Suspense } from "react";
 import UploadZone from "@/components/magic/UploadZone";
 import GeneratingLoader from "@/components/ui/GeneratingLoader";
 import PageLoader from "@/components/ui/PageLoader";
-import { ArrowLeft, Copy, Check, CalendarDays, Download, RefreshCw } from "lucide-react";
+import { ArrowLeft, Copy, Check, CalendarDays, Download, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ function GenerateContent() {
     const [isDownloading, setIsDownloading] = useState(false);
     const [history, setHistory] = useState<Array<{ id: string; generated_image_url: string; caption: string; description: string; status: string; created_at: string }>>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [selectedGeneration, setSelectedGeneration] = useState<typeof history[0] | null>(null);
     const router = useRouter();
 
     const searchParams = useSearchParams();
@@ -255,6 +256,25 @@ function GenerateContent() {
         }
     };
 
+    const handleDownloadHistory = async (imageUrl: string, filename: string = "larismanis-poster.jpg") => {
+        try {
+            const response = await fetch(imageUrl);
+            if (!response.ok) throw new Error(`Download failed (HTTP ${response.status})`);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading image:", error);
+            alert("Gagal mengunduh gambar. Silakan coba lagi.");
+        }
+    };
+
     const handleReset = () => {
         setFile(null);
         setResult(null);
@@ -411,10 +431,10 @@ function GenerateContent() {
                                         <button
                                             onClick={handleDownload}
                                             disabled={isDownloading}
-                                            className="flex-1 bg-white border-2 border-gray-200 text-secondary font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="flex-1 bg-primary text-white font-bold py-3 rounded-xl hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             <Download className="w-5 h-5" />
-                                            {isDownloading ? "Mengunduh..." : "Download Gambar"}
+                                            {isDownloading ? "Mengunduh..." : "Unduh Gambar"}
                                         </button>
                                         <button
                                             onClick={handleCopy}
@@ -425,7 +445,7 @@ function GenerateContent() {
                                         </button>
                                         <button
                                             onClick={handleReset}
-                                            className="flex-1 bg-primary text-white font-bold py-3 rounded-xl hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                            className="flex-1 bg-white border-2 border-gray-200 text-secondary font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                                         >
                                             <RefreshCw className="w-5 h-5" />
                                             Buat Lagi
@@ -433,48 +453,6 @@ function GenerateContent() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="bg-white rounded-3xl shadow-xl border border-emerald-100 p-4 md:p-6 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-lg font-bold text-secondary">Riwayat Generasi</h3>
-                                    <p className="text-sm text-gray-500">Lihat poster yang pernah kamu buat.</p>
-                                </div>
-                                {isLoadingHistory && (
-                                    <span className="text-xs text-gray-400">Memuat...</span>
-                                )}
-                            </div>
-
-                            {history.length === 0 && !isLoadingHistory ? (
-                                <div className="text-center text-gray-400 text-sm py-6 border border-dashed border-gray-200 rounded-2xl">
-                                    Belum ada riwayat generasi.
-                                </div>
-                            ) : (
-                                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {history.map((item) => (
-                                        <div key={item.id} className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                            <div className="aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
-                                                <img src={item.generated_image_url} alt={item.caption.slice(0, 40)} className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="p-3 space-y-2">
-                                                <p className="text-xs uppercase text-gray-400 font-semibold">{new Date(item.created_at).toLocaleString()}</p>
-                                                <p className="text-sm text-secondary line-clamp-2">{item.caption}</p>
-                                                <div className="flex items-center justify-between text-xs text-gray-500">
-                                                    <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full font-semibold">{item.status}</span>
-                                                    <button
-                                                        onClick={() => window.open(item.generated_image_url, "_blank")}
-                                                        className="flex items-center gap-1 text-primary font-semibold hover:underline"
-                                                    >
-                                                        <Download className="w-4 h-4" />
-                                                        Unduh
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
                         </div>
 
                         {/* Transition to Planner CTA */}
@@ -504,6 +482,130 @@ function GenerateContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Detail Modal */}
+            <AnimatePresence>
+                {selectedGeneration && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedGeneration(null)}
+                            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+                        />
+                        
+                        {/* Modal */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-2xl mx-auto max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="bg-white rounded-3xl shadow-2xl border border-emerald-100 overflow-hidden">
+                                {/* Close Button */}
+                                <button
+                                    onClick={() => setSelectedGeneration(null)}
+                                    className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-red-50 text-gray-500 hover:text-red-500 p-2 rounded-full shadow-sm transition-all"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+
+                                {/* Image */}
+                                <div className="bg-gray-100 flex items-center justify-center h-64 md:h-96">
+                                    <img
+                                        src={selectedGeneration.generated_image_url}
+                                        alt="Generated content"
+                                        className="max-w-full max-h-full object-cover"
+                                    />
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-6 md:p-8 space-y-6">
+                                    <div>
+                                        <p className="text-xs uppercase text-gray-400 font-semibold mb-2">
+                                            {new Date(selectedGeneration.created_at).toLocaleString()}
+                                        </p>
+                                        <h3 className="text-lg font-bold text-secondary mb-3">Caption</h3>
+                                        <div className="bg-emerald-50 p-4 rounded-xl text-gray-700 leading-relaxed border border-emerald-100">
+                                            {selectedGeneration.caption}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <span className="text-sm font-semibold px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full">
+                                            Status: {selectedGeneration.status}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(selectedGeneration.caption);
+                                                setCopied(true);
+                                                setTimeout(() => setCopied(false), 2000);
+                                            }}
+                                            className="flex-1 bg-white border-2 border-primary text-primary font-bold py-3 rounded-xl hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Copy className="w-5 h-5" />
+                                            Copy Caption
+                                        </button>
+                                        <button
+                                            onClick={() => handleDownloadHistory(selectedGeneration.generated_image_url, "larismanis-poster.jpg")}
+                                            className="flex-1 bg-primary text-white font-bold py-3 rounded-xl hover:bg-emerald-600 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Download className="w-5 h-5" />
+                                            Unduh Gambar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Riwayat Generasi - Always Visible */}
+            <div className="bg-white rounded-3xl shadow-xl border border-emerald-100 p-4 md:p-6 space-y-4 mt-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold text-secondary">Riwayat Generasi</h3>
+                        <p className="text-sm text-gray-500">Lihat poster yang pernah kamu buat.</p>
+                    </div>
+                    {isLoadingHistory && (
+                        <span className="text-xs text-gray-400">Memuat...</span>
+                    )}
+                </div>
+
+                {history.length === 0 && !isLoadingHistory ? (
+                    <div className="text-center text-gray-400 text-sm py-6 border border-dashed border-gray-200 rounded-2xl">
+                        Belum ada riwayat generasi.
+                    </div>
+                ) : (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {history.map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => setSelectedGeneration(item)}
+                                className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-emerald-200 transition-all text-left"
+                            >
+                                <div className="aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
+                                    <img src={item.generated_image_url} alt={item.caption.slice(0, 40)} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="p-3 space-y-2">
+                                    <p className="text-xs uppercase text-gray-400 font-semibold">{new Date(item.created_at).toLocaleString()}</p>
+                                    <p className="text-sm text-secondary line-clamp-2">{item.caption}</p>
+                                    <div className="flex items-center justify-between text-xs text-gray-500">
+                                        <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full font-semibold">{item.status}</span>
+                                        <span className="text-primary font-semibold">Lihat Detail →</span>
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
         </main>
     );
 }
