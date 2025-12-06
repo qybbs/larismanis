@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 interface ActionSuggestionProps {
     action: {
-        type: "create_poster" | "open_planner" | "consult_more";
+        type: "create_poster" | "open_planner" | "consult_more" | "generate_image" | "content_planning" | "unknown";
         label: string;
         prompt?: string;
         description?: string;
@@ -17,14 +17,16 @@ export default function ActionSuggestion({ action }: ActionSuggestionProps) {
     const getActionConfig = () => {
         switch (action.type) {
             case "create_poster":
+            case "generate_image":
                 return {
-                    href: `/generate?prompt=${encodeURIComponent(action.prompt || "")}`,
+                    href: `/generate${action.prompt ? `?prompt=${encodeURIComponent(action.prompt)}` : ""}`,
                     icon: Sparkles,
                     gradient: "from-primary to-emerald-600",
                     bgColor: "bg-emerald-50",
                     borderColor: "border-emerald-100",
                 };
             case "open_planner":
+            case "content_planning":
                 return {
                     href: "/plan",
                     icon: Calendar,
@@ -40,6 +42,7 @@ export default function ActionSuggestion({ action }: ActionSuggestionProps) {
                     bgColor: "bg-purple-50",
                     borderColor: "border-purple-100",
                 };
+            case "unknown":
             default:
                 return {
                     href: "#",

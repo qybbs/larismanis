@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ChatWindow, { Message } from "@/components/chat/ChatWindow";
 import ChatSidebar, { ChatSession } from "@/components/chat/ChatSidebar";
 import { ArrowLeft, MessageSquare, Plus } from "lucide-react";
 import Link from "next/link";
+import { getContextChatUser } from "@/lib/api";
 
-// Mock Initial Data
+// Initial Data
 const INITIAL_SESSION_ID = "session-1";
 const INITIAL_SESSIONS: ChatSession[] = [
     {
@@ -27,12 +29,33 @@ const INITIAL_MESSAGES: Record<string, Message[]> = {
     ]
 };
 
+// Helper to create action based on backend response
+const createActionFromResponse = (action: "unknown" | "generate_image" | "content_planning") => {
+    switch (action) {
+        case "generate_image":
+            return {
+                type: "generate_image" as const,
+                label: "Buat Konten Visual",
+                description: "Klik untuk membuat poster/gambar iklan",
+            };
+        case "content_planning":
+            return {
+                type: "content_planning" as const,
+                label: "Buka Content Planner",
+                description: "Klik untuk membuat jadwal konten",
+            };
+        default:
+            return undefined;
+    }
+};
+
 export default function ConsultPage() {
     const [sessions, setSessions] = useState<ChatSession[]>(INITIAL_SESSIONS);
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(INITIAL_SESSION_ID);
     const [messagesBySession, setMessagesBySession] = useState<Record<string, Message[]>>(INITIAL_MESSAGES);
     const [isTyping, setIsTyping] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const router = useRouter();
 
     const currentMessages = currentSessionId ? (messagesBySession[currentSessionId] || []) : [];
 
@@ -62,10 +85,9 @@ export default function ConsultPage() {
         if (currentSessionId === id) {
             setCurrentSessionId(null);
         }
-        // Optional: cleanup messages
     };
 
-    const handleSendMessage = (content: string) => {
+    const handleSendMessage = async (content: string) => {
         if (!currentSessionId) return;
 
         const userMsg: Message = {
@@ -74,7 +96,7 @@ export default function ConsultPage() {
             content: content
         };
 
-        // Update messages
+        // Update messages with user message
         setMessagesBySession(prev => ({
             ...prev,
             [currentSessionId]: [...(prev[currentSessionId] || []), userMsg]
@@ -94,40 +116,55 @@ export default function ConsultPage() {
 
         setIsTyping(true);
 
-        // Mock AI Response
-        setTimeout(() => {
-            let aiMsg: Message = {
+        try {
+            // Call real API
+            const response = await getContextChatUser(content);
+
+            if (response.success && response.data) {
+                const action = createActionFromResponse(response.data.action);
+
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: "assistant",
+                    content: response.data.geminiResponse,
+                    action: action,
+                };
+
+                setMessagesBySession(prev => ({
+                    ...prev,
+                    [currentSessionId]: [...(prev[currentSessionId] || []), aiMsg]
+                }));
+            } else {
+                throw new Error("Invalid response format");
+            }
+        } catch (err) {
+            console.error("Error getting chat response:", err);
+
+            let errorMessage = "Maaf, terjadi kesalahan. Silakan coba lagi.";
+
+            if (err instanceof Error) {
+                if (err.message.includes("Authentication required")) {
+                    alert("Silakan login terlebih dahulu.");
+                    router.push("/login");
+                    setIsTyping(false);
+                    return;
+                }
+                errorMessage = `Maaf, terjadi kesalahan: ${err.message}`;
+            }
+
+            const errorAiMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: "Maaf, saya kurang paham. Bisa jelaskan lebih detail?",
+                content: errorMessage,
             };
-
-            const lowerInput = content.toLowerCase();
-            if (lowerInput.includes("sepi") || lowerInput.includes("turun")) {
-                aiMsg = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: "Wah, jangan patah semangat! Kalau lagi sepi, biasanya strategi 'Bundle Hemat' atau 'Menu Baru' cukup ampuh. Coba deh bikin poster promo yang menarik.",
-                    action: {
-                        type: "create_poster",
-                        label: "Buat Poster Promo",
-                        prompt: "Poster promo makanan bundle hemat diskon menarik",
-                    },
-                };
-            } else if (lowerInput.includes("ide") || lowerInput.includes("konten")) {
-                aiMsg = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: "Untuk ide konten, kamu bisa coba selang-seling antara edukasi produk dan hiburan. Mau saya buatkan jadwal mingguan?",
-                };
-            }
 
             setMessagesBySession(prev => ({
                 ...prev,
-                [currentSessionId]: [...(prev[currentSessionId] || []), aiMsg]
+                [currentSessionId]: [...(prev[currentSessionId] || []), errorAiMsg]
             }));
+        } finally {
             setIsTyping(false);
-        }, 1500);
+        }
     };
 
     return (

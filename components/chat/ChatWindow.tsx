@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, Sparkles, Menu } from "lucide-react";
 import { motion } from "framer-motion";
+import Markdown from "react-markdown";
 import ActionSuggestion from "./ActionSuggestion";
 
 export interface Message {
@@ -10,9 +11,10 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   action?: {
-    type: "create_poster";
+    type: "create_poster" | "open_planner" | "consult_more" | "generate_image" | "content_planning" | "unknown";
     label: string;
-    prompt: string;
+    prompt?: string;
+    description?: string;
   };
 }
 
@@ -91,7 +93,13 @@ export default function ChatWindow({ messages, onSendMessage, isTyping, onToggle
                 : "bg-white text-gray-800 rounded-tl-none shadow-sm"
                 }`}
             >
-              <p>{msg.content}</p>
+              {msg.role === "assistant" ? (
+                <div className="prose prose-sm prose-emerald max-w-none prose-headings:text-secondary prose-headings:font-bold prose-headings:mt-3 prose-headings:mb-2 prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-strong:text-emerald-700 prose-hr:my-3 prose-hr:border-emerald-100">
+                  <Markdown>{msg.content}</Markdown>
+                </div>
+              ) : (
+                <p>{msg.content}</p>
+              )}
               {msg.action && (
                 <div className="mt-3 pt-3 border-t border-gray-100/20">
                   <ActionSuggestion action={msg.action} />

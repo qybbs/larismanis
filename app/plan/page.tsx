@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import CategoryInput from "@/components/plan/CategoryInput";
 import CalendarView, { PlanItem } from "@/components/plan/CalendarView";
 import DayDetails from "@/components/plan/DayDetails";
@@ -8,34 +9,19 @@ import PageLoader from "@/components/ui/PageLoader";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { generateContentPlanning, parseDateDDMMYYYY, type ContentPlan } from "@/lib/api";
 
-// Mock Data Generator
-const generateMockPlan = (category: string): PlanItem[] => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const plan: PlanItem[] = [];
-    const types = ["Promo", "Edukasi", "Hiburan", "Interaksi", "Inspirasi"];
-    const formats = ["Foto", "Video", "Carousel", "Reels", "Story"];
-
-    for (let i = 1; i <= daysInMonth; i++) {
-        if (Math.random() > 0.4) {
-            const date = new Date(year, month, i);
-            const type = types[Math.floor(Math.random() * types.length)];
-            const format = formats[Math.floor(Math.random() * formats.length)];
-
-            plan.push({
-                id: `task-${i}`,
-                date: date,
-                type: type,
-                idea: `${type} content for ${category}: Idea #${i}`,
-                format: format
-            });
-        }
-    }
-    return plan;
+// Transform API response to PlanItem format for calendar
+const transformContentPlansToPlanItems = (plans: ContentPlan[]): PlanItem[] => {
+    return plans.map((plan, index) => ({
+        id: `plan-${index}-${plan.date}`,
+        date: parseDateDDMMYYYY(plan.date),
+        theme: plan.theme,
+        content_type: plan.content_type,
+        visual_idea: plan.visual_idea,
+        caption_hook: plan.caption_hook,
+        platform: plan.platform,
+    }));
 };
 
 export default function PlanPage() {
@@ -43,15 +29,41 @@ export default function PlanPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [plan, setPlan] = useState<PlanItem[] | null>(null);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
-    const handleGenerate = (cat: string) => {
+    const handleGenerate = async (cat: string) => {
         setCategory(cat);
         setIsLoading(true);
+        setError(null);
 
-        setTimeout(() => {
-            setPlan(generateMockPlan(cat));
+        try {
+            // businessName and businessType both use the category input
+            // startDate is automatically set to today in the API function
+            const response = await generateContentPlanning(cat, cat);
+
+            if (response.success && response.data?.contentPlans?.plans) {
+                const planItems = transformContentPlansToPlanItems(response.data.contentPlans.plans);
+                setPlan(planItems);
+            } else {
+                throw new Error("Invalid response format from API");
+            }
+        } catch (err) {
+            console.error("Error generating content plan:", err);
+
+            if (err instanceof Error) {
+                if (err.message.includes("Authentication required")) {
+                    alert("Silakan login terlebih dahulu.");
+                    router.push("/login");
+                    return;
+                }
+                setError(err.message);
+            } else {
+                setError("Gagal membuat content plan. Silakan coba lagi.");
+            }
+        } finally {
             setIsLoading(false);
-        }, 2000);
+        }
     };
 
     const getTasksForSelectedDate = () => {
@@ -61,6 +73,12 @@ export default function PlanPage() {
             item.date.getMonth() === selectedDate.getMonth() &&
             item.date.getFullYear() === selectedDate.getFullYear()
         );
+    };
+
+    const handleReset = () => {
+        setPlan(null);
+        setCategory("");
+        setError(null);
     };
 
     return (
@@ -90,6 +108,18 @@ export default function PlanPage() {
                                 className="mt-6 md:mt-12"
                             >
                                 <CategoryInput onSubmit={handleGenerate} isLoading={isLoading} />
+
+                                {error && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mt-4 max-w-xl mx-auto"
+                                    >
+                                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm text-center">
+                                            {error}
+                                        </div>
+                                    </motion.div>
+                                )}
                             </motion.div>
                         )}
 
@@ -116,7 +146,7 @@ export default function PlanPage() {
                                         Strategi: <span className="text-primary">{category}</span>
                                     </p>
                                     <button
-                                        onClick={() => setPlan(null)}
+                                        onClick={handleReset}
                                         className="text-sm text-gray-500 hover:text-primary transition-colors flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full border border-gray-200 hover:border-primary/30"
                                     >
                                         <RefreshCw className="w-4 h-4" />
@@ -149,4 +179,3 @@ export default function PlanPage() {
         </div>
     );
 }
-

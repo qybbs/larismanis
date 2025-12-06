@@ -51,17 +51,21 @@ export default function DayDetails({ date, tasks, onAddTask }: DayDetailsProps) 
                         <div key={task.id} className="group bg-white border border-gray-100 hover:border-emerald-200 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all">
                             <div className="flex justify-between items-start mb-2">
                                 <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wide">
-                                    {task.type}
+                                    {task.theme}
                                 </span>
                                 <button className="text-gray-300 hover:text-gray-500">
                                     <MoreVertical className="w-4 h-4" />
                                 </button>
                             </div>
-                            <h4 className="font-medium text-gray-800 mb-3 leading-snug">{task.idea}</h4>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <h4 className="font-medium text-gray-800 mb-2 leading-snug">{task.visual_idea}</h4>
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.caption_hook}</p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
                                 <span className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
-                                    {getIcon(task.format)}
-                                    {task.format}
+                                    {getIcon(task.content_type)}
+                                    {task.content_type}
+                                </span>
+                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md">
+                                    {task.platform}
                                 </span>
                             </div>
                         </div>

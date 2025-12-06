@@ -7,9 +7,11 @@ import { motion } from "framer-motion";
 export interface PlanItem {
     id: string;
     date: Date;
-    type: string;
-    idea: string;
-    format: string;
+    theme: string;
+    content_type: string;
+    visual_idea: string;
+    caption_hook: string;
+    platform: string;
 }
 
 interface CalendarViewProps {
@@ -142,7 +144,7 @@ export default function CalendarView({ plan, selectedDate, onSelectDate }: Calen
                                 <div className="flex flex-col gap-1">
                                     {tasks.slice(0, 2).map((task, i) => (
                                         <div key={i} className="text-[10px] truncate px-2 py-1 rounded-md bg-emerald-100/50 text-emerald-800 font-medium border border-emerald-100/50">
-                                            {task.type}
+                                            {task.theme}
                                         </div>
                                     ))}
                                     {tasks.length > 2 && (
