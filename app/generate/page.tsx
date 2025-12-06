@@ -1,12 +1,14 @@
 "use client";
 
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+
 import { useState, useEffect, Suspense } from "react";
 import UploadZone from "@/components/magic/UploadZone";
 import GeneratingLoader from "@/components/ui/GeneratingLoader";
 import PageLoader from "@/components/ui/PageLoader";
 import { ArrowLeft, Copy, Check, CalendarDays, Download, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 function GenerateContent() {
@@ -14,6 +16,7 @@ function GenerateContent() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState<{ image: string; caption: string } | null>(null);
     const [copied, setCopied] = useState(false);
+    const router = useRouter();
 
     const searchParams = useSearchParams();
     const promptParam = searchParams.get("prompt");
@@ -49,30 +52,146 @@ function GenerateContent() {
         setFile(selectedFile);
     };
 
+    // --- 1. LOGIC UNTUK IMAGE PROMPT ---
+    const getFinalImagePrompt = (styleId: string) => {
+        const baseInstruction = "Create a high-end commercial advertisement photography. 8k resolution, highly detailed, professional studio lighting.";
+        
+        const styles: Record<string, string> = {
+            Modern: "Aesthetic: Modern. Use a clean, sleek layout with geometric shapes, contemporary lighting, and a cool color palette.",
+            Vintage: "Aesthetic: Vintage. Use a retro charm style, warm nostalgic color tones, subtle film grain, and classic textures.",
+            Futuristic: "Aesthetic: Futuristic. Use neon lighting accents (cyan, magenta), metallic textures, and a cyber-themed background.",
+            Minimalist: "Aesthetic: Minimalist. Use plenty of negative space, soft pastel colors, diffuse natural lighting, and a simple elegant background.",
+            Luxury: "Aesthetic: Luxury. Use dramatic high-contrast lighting, rich textures like marble or velvet, and gold accents.",
+            Playful: "Aesthetic: Playful. Use bright pop-art colors, dynamic patterns, and high-key cheerful lighting."
+        };
+
+        return `${baseInstruction} ${(styles[styleId] || styles["Modern"])}`;
+    };
+
+    // --- 2. LOGIC UNTUK CAPTION PROMPT ---
+    const getFinalCaptionPrompt = (styleId: string) => {
+        const styles: Record<string, string> = {
+            Professional: "Professional and Trustworthy. Use formal but elegant language. Focus on credibility and quality. No slang.",
+            Friendly: "Friendly and Warm. Use casual language like talking to a best friend. Use warm emojis (🥰, ✨).",
+            Enthusiastic: "Enthusiastic and Bold! Use high energy, exclamation marks, and power words. Express excitement about the taste.",
+            Witty: "Witty and Humorous. Use puns, rhymes, or light jokes. Make the reader smile.",
+            Urgent: "Urgent/FOMO. Emphasize limited stock or time. Use words like 'Now', 'Hurry', 'Today only'.",
+            Storytelling: "Storytelling. Start with a short narrative scenario to build mood before introducin the product."
+        };
+
+        return `${styles[styleId] || styles["Friendly"]} Buat caption dalam Bahasa Indonesia yang natural dan menarik.`;
+    };
+
+    // --- 3. IMAGE COMPRESSION HELPER ---
+    const compressImage = async (file: File): Promise<File> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                
+                // Max dimension rule
+                const MAX_SIZE = 1024;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height *= MAX_SIZE / width;
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width *= MAX_SIZE / height;
+                        height = MAX_SIZE;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(
+                        (blob) => {
+                            if (blob) {
+                                resolve(new File([blob], file.name, {
+                                    type: "image/jpeg",
+                                    lastModified: Date.now(),
+                                }));
+                            } else {
+                                reject(new Error("Canvas to Blob failed"));
+                            }
+                        },
+                        "image/jpeg",
+                        0.8 // Quality compression
+                    );
+                } else {
+                    reject(new Error("Canvas context failed"));
+                }
+            };
+            img.onerror = (error) => reject(error);
+        });
+    };
+
     const handleGenerate = async () => {
         if (!file) return;
         setIsProcessing(true);
+        setResult(null);
 
-        setTimeout(() => {
-            setIsProcessing(false);
+        try {
+            const supabase = getSupabaseBrowserClient();
+            const { data: { session } } = await supabase.auth.getSession();
 
-            let stylePrefix = "";
-            switch (captionStyle) {
-                case "Friendly": stylePrefix = "Hai Bestie! 👋 "; break;
-                case "Enthusiastic": stylePrefix = "WOW! 😱 "; break;
-                case "Urgent": stylePrefix = "BURUAN SERBU! 🏃💨 "; break;
-                case "Witty": stylePrefix = "Awas ketagihan! 😜 "; break;
-                case "Luxury": stylePrefix = "Elegance redefined. ✨ "; break;
-                default: stylePrefix = "🔥 PROMO SPESIAL! ";
+            if (!session) {
+                alert("Please login first.");
+                router.push("/login");
+                return;
             }
 
-            setResult({
-                image: URL.createObjectURL(file),
-                caption: promptParam
-                    ? `(Based on: ${promptParam}) ${stylePrefix}Nikmati kelezatan tiada tara. Pesan sekarang! #LarisManis`
-                    : `${stylePrefix}Nikmati kelezatan tiada tara dengan sentuhan ${imageStyle} yang memukau. Pesan sekarang sebelum kehabisan! #KulinerEnak #Promo`,
+            // Compress image before sending
+            console.log("Compressing image...");
+            const compressedFile = await compressImage(file);
+            console.log(`Original size: ${file.size}, Compressed size: ${compressedFile.size}`);
+
+            const formData = new FormData();
+            formData.append("image", compressedFile);
+            formData.append("imageStylePrompt", getFinalImagePrompt(imageStyle));
+            formData.append("captionStylePrompt", getFinalCaptionPrompt(captionStyle));
+
+            console.log("Sending request to Edge Function...");
+
+            const response = await fetch("https://tybpzzlopbmayxqxghte.supabase.co/functions/v1/generateMarketingContent", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${session.access_token}`,
+                },
+                body: formData,
             });
-        }, 4000);
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error("Edge Function Error:", { status: response.status, data });
+                throw new Error(data.error || `Failed to generate content (Status: ${response.status})`);
+            }
+
+            if (data.success && data.data) {
+                setResult({
+                    image: data.data.imageUrl,
+                    caption: data.data.caption,
+                });
+            } else {
+                throw new Error("Invalid response format");
+            }
+
+        } catch (error) {
+            console.error("Error generating content:", error);
+            alert(error instanceof Error ? error.message : "Failed to generate content. Please try again.");
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const handleCopy = () => {
