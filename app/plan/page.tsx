@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import CategoryInput from "@/components/plan/CategoryInput";
 import CalendarView, { PlanItem } from "@/components/plan/CalendarView";
 import DayDetails from "@/components/plan/DayDetails";
@@ -31,6 +31,15 @@ export default function PlanPage() {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Auto-fill category from URL param on mount
+    useEffect(() => {
+        const paramCategory = searchParams.get("category");
+        if (paramCategory) {
+            setCategory(paramCategory);
+        }
+    }, [searchParams]);
 
     const handleGenerate = async (cat: string) => {
         setCategory(cat);
@@ -107,7 +116,7 @@ export default function PlanPage() {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="mt-6 md:mt-12"
                             >
-                                <CategoryInput onSubmit={handleGenerate} isLoading={isLoading} />
+                                <CategoryInput onSubmit={handleGenerate} isLoading={isLoading} initialValue={category} />
 
                                 {error && (
                                     <motion.div

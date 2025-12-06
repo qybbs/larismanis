@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 
 interface CategoryInputProps {
     onSubmit: (category: string) => void;
     isLoading: boolean;
+    initialValue?: string;
 }
 
-export default function CategoryInput({ onSubmit, isLoading }: CategoryInputProps) {
-    const [category, setCategory] = useState("");
+export default function CategoryInput({ onSubmit, isLoading, initialValue = "" }: CategoryInputProps) {
+    const [category, setCategory] = useState(initialValue);
+
+    useEffect(() => {
+        setCategory(initialValue);
+    }, [initialValue]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

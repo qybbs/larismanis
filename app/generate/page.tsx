@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 function GenerateContent() {
     const [file, setFile] = useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [result, setResult] = useState<{ image: string; caption: string } | null>(null);
+    const [result, setResult] = useState<{ image: string; caption: string; description: string } | null>(null);
     const [copied, setCopied] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [history, setHistory] = useState<Array<{ id: string; generated_image_url: string; caption: string; description: string; status: string; created_at: string }>>([]);
@@ -212,6 +212,7 @@ function GenerateContent() {
                 setResult({
                     image: data.data.imageUrl,
                     caption: data.data.caption,
+                    description: data.data.description
                 });
             } else {
                 throw new Error("Invalid response format");
@@ -471,7 +472,7 @@ function GenerateContent() {
                                     <p className="text-sm text-gray-600">Buat jadwal posting otomatis untuk maksimalkan engagement.</p>
                                 </div>
                                 <Link
-                                    href="/plan"
+                                    href={`/plan?category=${encodeURIComponent(result.description)}`}
                                     className="w-full sm:w-auto bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                                 >
                                     Buka Planner
@@ -558,6 +559,33 @@ function GenerateContent() {
                                             <Download className="w-5 h-5" />
                                             Unduh Gambar
                                         </button>
+                                    </div>
+
+                                    {/* Transition to Planner CTA */}
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.2 }}
+                                            className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-100"
+                                        >
+                                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                                                <div className="p-2 bg-white rounded-lg shadow-sm flex-shrink-0">
+                                                    <CalendarDays className="w-6 h-6 text-primary" />
+                                                </div>
+                                                <div className="flex-1 text-center sm:text-left">
+                                                    <h4 className="font-bold text-secondary text-sm md:text-base">Jadwalkan Kontenmu!</h4>
+                                                    <p className="text-xs text-gray-600">Buat jadwal posting otomatis untuk maksimalkan engagement.</p>
+                                                </div>
+                                                <Link
+                                                    href={`/plan?category=${encodeURIComponent(selectedGeneration.description || selectedGeneration.caption)}`}
+                                                    className="w-full sm:w-auto bg-primary text-white font-bold px-5 py-2.5 rounded-lg hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg text-sm"
+                                                >
+                                                    Buka Planner
+                                                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                                                </Link>
+                                            </div>
+                                        </motion.div>
                                     </div>
                                 </div>
                             </div>
