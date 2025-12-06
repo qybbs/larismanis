@@ -27,7 +27,7 @@ export interface ContentPlanningResponse {
 export interface ChatResponse {
     success: boolean;
     data: {
-        action: "unknown" | "generate_image" | "content_planning";
+        action: "offer_poster" | "open_planner" | "consult_more" | "generate_image" | "offer_campaign" | "unknown";
         geminiResponse: string;
     };
 }

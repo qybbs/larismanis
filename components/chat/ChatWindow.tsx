@@ -74,13 +74,15 @@ export default function ChatWindow({ messages, onSendMessage, isTyping, onToggle
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto px-4 md:px-0 space-y-6" ref={scrollRef}>
-        {messages.length === 0 && (
+        {messages.filter(m => m.role !== "assistant" || m.content.trim() !== "").length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-50">
             <Bot className="w-16 h-16 text-gray-300 mb-4" />
             <p className="text-gray-500">Mulai percakapan baru dengan LarisManis AI.</p>
           </div>
         )}
-        {messages.map((msg) => (
+        {messages
+          .filter((msg) => msg.role !== "assistant" || msg.content.trim() !== "")
+          .map((msg) => (
           <motion.div
             key={msg.id}
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -88,7 +90,7 @@ export default function ChatWindow({ messages, onSendMessage, isTyping, onToggle
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] p-3.5 rounded-2xl shadow-sm text-[15px] leading-relaxed relative ${msg.role === "user"
+              className={`max-w-[85%] min-w-[140px] min-h-[56px] p-3.5 rounded-2xl shadow-sm text-[15px] leading-relaxed relative ${msg.role === "user"
                 ? "bg-primary text-white rounded-tr-none"
                 : "bg-white text-gray-800 rounded-tl-none shadow-sm"
                 }`}

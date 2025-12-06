@@ -57,6 +57,7 @@ export default function ConsultPage() {
     const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isTyping, setIsTyping] = useState(false);
+    const [isWaitingStream, setIsWaitingStream] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -165,6 +166,7 @@ export default function ConsultPage() {
         }));
 
         setIsTyping(true);
+        setIsWaitingStream(true);
 
         // Create placeholder for assistant message
         const assistantMsgId = (Date.now() + 1).toString();
@@ -182,6 +184,7 @@ export default function ConsultPage() {
             content,
             // onChunk - update message content progressively
             (chunk) => {
+                setIsWaitingStream(false);
                 setMessages(prev => prev.map(msg => {
                     if (msg.id === assistantMsgId) {
                         return { ...msg, content: msg.content + chunk };
@@ -191,6 +194,7 @@ export default function ConsultPage() {
             },
             // onComplete - add action if needed
             (fullResponse, action) => {
+                console.log("stream complete", { fullResponse, action });
                 const actionObj = createActionFromResponse(action);
                 setMessages(prev => prev.map(msg => {
                     if (msg.id === assistantMsgId) {
@@ -199,6 +203,7 @@ export default function ConsultPage() {
                     return msg;
                 }));
                 setIsTyping(false);
+                setIsWaitingStream(false);
                 setStreamingMessageId(null);
             },
             // onError
@@ -221,6 +226,7 @@ export default function ConsultPage() {
                 }
 
                 setIsTyping(false);
+                setIsWaitingStream(false);
                 setStreamingMessageId(null);
             }
         );
@@ -271,7 +277,7 @@ export default function ConsultPage() {
                         <ChatWindow
                             messages={messages}
                             onSendMessage={handleSendMessage}
-                            isTyping={isTyping && !streamingMessageId}
+                            isTyping={(isTyping && !streamingMessageId) || isWaitingStream}
                             onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                         />
                     ) : (

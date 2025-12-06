@@ -16,6 +16,9 @@ function GenerateContent() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState<{ image: string; caption: string } | null>(null);
     const [copied, setCopied] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [history, setHistory] = useState<Array<{ id: string; generated_image_url: string; caption: string; description: string; status: string; created_at: string }>>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const router = useRouter();
 
     const searchParams = useSearchParams();
@@ -26,6 +29,33 @@ function GenerateContent() {
             console.log("Auto-filling prompt:", promptParam);
         }
     }, [promptParam]);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                setIsLoadingHistory(true);
+                const supabase = getSupabaseBrowserClient();
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) return;
+
+                const { data, error } = await supabase
+                    .from("generations")
+                    .select("id, generated_image_url, caption, description, status, created_at")
+                    .eq("user_id", session.user.id)
+                    .order("created_at", { ascending: false })
+                    .limit(6);
+
+                if (error) throw error;
+                setHistory(data || []);
+            } catch (err) {
+                console.error("Error fetching history:", err);
+            } finally {
+                setIsLoadingHistory(false);
+            }
+        };
+
+        fetchHistory();
+    }, []);
 
     const [imageStyle, setImageStyle] = useState("Modern");
     const [captionStyle, setCaptionStyle] = useState("Professional");
@@ -202,6 +232,29 @@ function GenerateContent() {
         }
     };
 
+    const handleDownload = async () => {
+        if (!result?.image) return;
+        try {
+            setIsDownloading(true);
+            const response = await fetch(result.image);
+            if (!response.ok) throw new Error(`Download failed (HTTP ${response.status})`);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "larismanis-poster.jpg";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading image:", error);
+            alert("Gagal mengunduh gambar. Silakan coba lagi.");
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     const handleReset = () => {
         setFile(null);
         setResult(null);
@@ -356,6 +409,14 @@ function GenerateContent() {
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <button
+                                            onClick={handleDownload}
+                                            disabled={isDownloading}
+                                            className="flex-1 bg-white border-2 border-gray-200 text-secondary font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            <Download className="w-5 h-5" />
+                                            {isDownloading ? "Mengunduh..." : "Download Gambar"}
+                                        </button>
+                                        <button
                                             onClick={handleCopy}
                                             className="flex-1 bg-white border-2 border-primary text-primary font-bold py-3 rounded-xl hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
                                         >
@@ -372,6 +433,48 @@ function GenerateContent() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="bg-white rounded-3xl shadow-xl border border-emerald-100 p-4 md:p-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-secondary">Riwayat Generasi</h3>
+                                    <p className="text-sm text-gray-500">Lihat poster yang pernah kamu buat.</p>
+                                </div>
+                                {isLoadingHistory && (
+                                    <span className="text-xs text-gray-400">Memuat...</span>
+                                )}
+                            </div>
+
+                            {history.length === 0 && !isLoadingHistory ? (
+                                <div className="text-center text-gray-400 text-sm py-6 border border-dashed border-gray-200 rounded-2xl">
+                                    Belum ada riwayat generasi.
+                                </div>
+                            ) : (
+                                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {history.map((item) => (
+                                        <div key={item.id} className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                            <div className="aspect-[4/3] bg-white flex items-center justify-center overflow-hidden">
+                                                <img src={item.generated_image_url} alt={item.caption.slice(0, 40)} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="p-3 space-y-2">
+                                                <p className="text-xs uppercase text-gray-400 font-semibold">{new Date(item.created_at).toLocaleString()}</p>
+                                                <p className="text-sm text-secondary line-clamp-2">{item.caption}</p>
+                                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                                    <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full font-semibold">{item.status}</span>
+                                                    <button
+                                                        onClick={() => window.open(item.generated_image_url, "_blank")}
+                                                        className="flex items-center gap-1 text-primary font-semibold hover:underline"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                        Unduh
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Transition to Planner CTA */}

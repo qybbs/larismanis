@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 interface ActionSuggestionProps {
     action: {
-        type: "create_poster" | "open_planner" | "consult_more" | "generate_image" | "content_planning" | "unknown";
+        type: "offer_poster" | "open_planner" | "consult_more" | "generate_image" | "offer_campaign" | "unknown";
         label: string;
         prompt?: string;
         description?: string;
@@ -16,7 +16,7 @@ interface ActionSuggestionProps {
 export default function ActionSuggestion({ action }: ActionSuggestionProps) {
     const getActionConfig = () => {
         switch (action.type) {
-            case "create_poster":
+            case "offer_poster":
             case "generate_image":
                 return {
                     href: `/generate${action.prompt ? `?prompt=${encodeURIComponent(action.prompt)}` : ""}`,
@@ -26,7 +26,7 @@ export default function ActionSuggestion({ action }: ActionSuggestionProps) {
                     borderColor: "border-emerald-100",
                 };
             case "open_planner":
-            case "content_planning":
+            case "offer_campaign":
                 return {
                     href: "/plan",
                     icon: Calendar,

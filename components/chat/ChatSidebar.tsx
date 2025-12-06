@@ -54,7 +54,10 @@ export default function ChatSidebar({
                 <div className="flex flex-col h-full">
                     {/* Header */}
                     <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 className="font-bold text-secondary text-lg">Riwayat Chat</h2>
+                        <div className="flex items-center gap-2">
+                            <h2 className="font-bold text-secondary text-lg">Riwayat Chat</h2>
+                            <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Coming Soon</span>
+                        </div>
                         <button onClick={onClose} className="md:hidden p-2 text-gray-400 hover:text-gray-600">
                             <X className="w-5 h-5" />
                         </button>
@@ -63,11 +66,8 @@ export default function ChatSidebar({
                     {/* New Chat Button */}
                     <div className="p-4">
                         <button
-                            onClick={() => {
-                                onNewChat();
-                                if (window.innerWidth < 768) onClose();
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-primary text-white font-bold py-3 rounded-xl hover:bg-emerald-600 shadow-md hover:shadow-lg transition-all active:scale-95"
+                            disabled
+                            className="w-full flex items-center justify-center gap-2 bg-gray-300 text-gray-500 font-bold py-3 rounded-xl cursor-not-allowed opacity-60"
                         >
                             <Plus className="w-5 h-5" />
                             Chat Baru
@@ -75,7 +75,18 @@ export default function ChatSidebar({
                     </div>
 
                     {/* Session List */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 relative">
+                        {/* Disabled Overlay */}
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                            <div className="text-center px-6">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <MessageSquare className="w-8 h-8 text-gray-400" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Fitur Segera Hadir</p>
+                                <p className="text-xs text-gray-400">Riwayat chat akan tersedia dalam waktu dekat</p>
+                            </div>
+                        </div>
+
                         {sessions.length === 0 ? (
                             <div className="text-center py-10 text-gray-400 text-sm">
                                 Belum ada riwayat chat.
