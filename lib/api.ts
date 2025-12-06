@@ -274,3 +274,262 @@ export async function deleteChatSession(): Promise<void> {
         throw new Error("Failed to delete session");
     }
 }
+
+// ========== Content Plans CRUD ==========
+
+// Actual DB table structure
+interface DbContentPlanRow {
+    id: string;
+    user_id: string;
+    business_type: string;
+    plan_data: {
+        plans: ContentPlan[];
+    };
+    created_at: string;
+}
+
+// Flattened plan item for UI
+export interface FlattenedPlanItem {
+    id: string; // composite: row_id + index
+    rowId: string; // original row ID
+    date: Date;
+    theme: string;
+    content_type: string;
+    visual_idea: string;
+    caption_hook: string;
+    platform: string;
+    category: string;
+}
+
+export interface ContentPlanInput {
+    date: Date;
+    theme: string;
+    content_type: string;
+    visual_idea: string;
+    caption_hook: string;
+    platform: string;
+    category: string;
+}
+
+function formatDateYYYYMMDD(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+export function parseDateYYYYMMDD(dateStr: string): Date {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+// Flatten all rows into individual plan items for UI
+function flattenPlanRows(rows: DbContentPlanRow[]): FlattenedPlanItem[] {
+    const items: FlattenedPlanItem[] = [];
+    
+    for (const row of rows) {
+        if (row.plan_data?.plans) {
+            row.plan_data.plans.forEach((plan, index) => {
+                items.push({
+                    id: `${row.id}-${index}`,
+                    rowId: row.id,
+                    date: parseDateDDMMYYYY(plan.date),
+                    theme: plan.theme,
+                    content_type: plan.content_type,
+                    visual_idea: plan.visual_idea,
+                    caption_hook: plan.caption_hook,
+                    platform: plan.platform,
+                    category: row.business_type || "Promosi", // Use business_type as category
+                });
+            });
+        }
+    }
+    
+    return items;
+}
+
+export async function fetchContentPlans(): Promise<FlattenedPlanItem[]> {
+    const supabase = getSupabaseBrowserClient();
+    const userId = await getCurrentUserId();
+
+    if (!userId) {
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('content_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching content plans:", error);
+        return [];
+    }
+
+    return flattenPlanRows((data || []) as unknown as DbContentPlanRow[]);
+}
+
+export async function saveContentPlan(plan: ContentPlanInput, businessType?: string): Promise<FlattenedPlanItem | null> {
+    const supabase = getSupabaseBrowserClient();
+    const userId = await getCurrentUserId();
+
+    if (!userId) {
+        throw new Error("Not authenticated");
+    }
+
+    // Format plan for DB
+    const planData: ContentPlan = {
+        date: formatDateDDMMYYYY(plan.date), // DD-MM-YYYY format for consistency
+        theme: plan.theme,
+        content_type: plan.content_type,
+        visual_idea: plan.visual_idea,
+        caption_hook: plan.caption_hook,
+        platform: plan.platform,
+    };
+
+    const insertRow = {
+        user_id: userId,
+        business_type: businessType || plan.category || "Manual",
+        plan_data: {
+            plans: [planData]
+        }
+    };
+
+    const { data, error } = await supabase
+        .from('content_plans')
+        .insert(insertRow as never)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error saving content plan:", error);
+        throw new Error("Failed to save content plan");
+    }
+
+    const row = data as unknown as DbContentPlanRow;
+    return {
+        id: `${row.id}-0`,
+        rowId: row.id,
+        date: plan.date,
+        theme: plan.theme,
+        content_type: plan.content_type,
+        visual_idea: plan.visual_idea,
+        caption_hook: plan.caption_hook,
+        platform: plan.platform,
+        category: row.business_type,
+    };
+}
+
+export async function saveMultipleContentPlans(plans: ContentPlanInput[], businessType?: string): Promise<FlattenedPlanItem[]> {
+    const supabase = getSupabaseBrowserClient();
+    const userId = await getCurrentUserId();
+
+    if (!userId) {
+        throw new Error("Not authenticated");
+    }
+
+    // Group plans into single row with multiple plans
+    const planDataItems: ContentPlan[] = plans.map(plan => ({
+        date: formatDateDDMMYYYY(plan.date),
+        theme: plan.theme,
+        content_type: plan.content_type,
+        visual_idea: plan.visual_idea,
+        caption_hook: plan.caption_hook,
+        platform: plan.platform,
+    }));
+
+    const insertRow = {
+        user_id: userId,
+        business_type: businessType || plans[0]?.category || "Generated",
+        plan_data: {
+            plans: planDataItems
+        }
+    };
+
+    const { data, error } = await supabase
+        .from('content_plans')
+        .insert(insertRow as never)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error saving content plans:", error);
+        throw new Error("Failed to save content plans");
+    }
+
+    const row = data as unknown as DbContentPlanRow;
+    return plans.map((plan, index) => ({
+        id: `${row.id}-${index}`,
+        rowId: row.id,
+        date: plan.date,
+        theme: plan.theme,
+        content_type: plan.content_type,
+        visual_idea: plan.visual_idea,
+        caption_hook: plan.caption_hook,
+        platform: plan.platform,
+        category: row.business_type,
+    }));
+}
+
+export async function deleteContentPlan(compositeId: string): Promise<void> {
+    const supabase = getSupabaseBrowserClient();
+    const userId = await getCurrentUserId();
+
+    if (!userId) {
+        throw new Error("Not authenticated");
+    }
+
+    // Extract rowId from composite id (format: "uuid-index")
+    // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx-index
+    // So we need to get everything except the last segment (the index)
+    const parts = compositeId.split('-');
+    const rowId = parts.slice(0, -1).join('-'); // Get all parts except last (index)
+
+    const { error } = await supabase
+        .from('content_plans')
+        .delete()
+        .eq('id', rowId)
+        .eq('user_id', userId);
+
+    if (error) {
+        console.error("Error deleting content plan:", error);
+        throw new Error("Failed to delete content plan");
+    }
+}
+
+export async function generateContentPlanningFromDate(
+    businessType: string,
+    startDate: Date
+): Promise<ContentPlanningResponse> {
+    const token = await getAuthToken();
+
+    if (!token) {
+        throw new Error("Authentication required. Please login first.");
+    }
+
+    const formattedDate = formatDateDDMMYYYY(startDate);
+
+    const response = await fetch(`${BASE_URL}/generateContentPlanning`, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            startDate: formattedDate,
+            businessName: businessType,
+            businessType: businessType,
+        }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error("generateContentPlanningFromDate Error:", { status: response.status, data });
+        throw new Error(data.error || `Failed to generate content plan (Status: ${response.status})`);
+    }
+
+    return data as ContentPlanningResponse;
+}
+

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 
 export interface PlanItem {
@@ -12,15 +12,32 @@ export interface PlanItem {
     visual_idea: string;
     caption_hook: string;
     platform: string;
+    category?: string;
 }
+
+// Category color mapping for visual distinction
+const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+    "Promosi": { bg: "bg-rose-100/70", text: "text-rose-700", border: "border-rose-200" },
+    "Edukasi": { bg: "bg-blue-100/70", text: "text-blue-700", border: "border-blue-200" },
+    "Hiburan": { bg: "bg-amber-100/70", text: "text-amber-700", border: "border-amber-200" },
+    "Behind The Scene": { bg: "bg-violet-100/70", text: "text-violet-700", border: "border-violet-200" },
+    "Testimoni": { bg: "bg-cyan-100/70", text: "text-cyan-700", border: "border-cyan-200" },
+    "Tips & Trik": { bg: "bg-teal-100/70", text: "text-teal-700", border: "border-teal-200" },
+    "default": { bg: "bg-emerald-100/50", text: "text-emerald-800", border: "border-emerald-100/50" },
+};
+
+const getCategoryColor = (category?: string) => {
+    return CATEGORY_COLORS[category || ""] || CATEGORY_COLORS["default"];
+};
 
 interface CalendarViewProps {
     plan: PlanItem[];
     selectedDate: Date | null;
     onSelectDate: (date: Date) => void;
+    onEmptyDayClick?: (date: Date) => void;
 }
 
-export default function CalendarView({ plan, selectedDate, onSelectDate }: CalendarViewProps) {
+export default function CalendarView({ plan, selectedDate, onSelectDate, onEmptyDayClick }: CalendarViewProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     const daysInMonth = useMemo(() => {
@@ -140,19 +157,36 @@ export default function CalendarView({ plan, selectedDate, onSelectDate }: Calen
                                 {date.getDate()}
                             </span>
 
-                            {hasTasks && (
+                            {hasTasks ? (
                                 <div className="flex flex-col gap-1">
-                                    {tasks.slice(0, 2).map((task, i) => (
-                                        <div key={i} className="text-[10px] truncate px-2 py-1 rounded-md bg-emerald-100/50 text-emerald-800 font-medium border border-emerald-100/50">
-                                            {task.theme}
-                                        </div>
-                                    ))}
+                                    {tasks.slice(0, 2).map((task, i) => {
+                                        const colors = getCategoryColor(task.category);
+                                        return (
+                                            <div key={i} className={`text-[10px] truncate px-2 py-1 rounded-md font-medium border ${colors.bg} ${colors.text} ${colors.border}`}>
+                                                {task.theme}
+                                            </div>
+                                        );
+                                    })}
                                     {tasks.length > 2 && (
                                         <div className="text-[10px] text-gray-400 pl-1">
                                             +{tasks.length - 2} more
                                         </div>
                                     )}
                                 </div>
+                            ) : (
+                                isCurrentMonth && onEmptyDayClick && (
+                                    <div 
+                                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEmptyDayClick(date);
+                                        }}
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-emerald-50 border-2 border-dashed border-emerald-200 flex items-center justify-center text-emerald-400 hover:bg-emerald-100 hover:border-emerald-300 hover:text-emerald-500 transition-all">
+                                            <Plus className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                )
                             )}
                         </button>
                     );

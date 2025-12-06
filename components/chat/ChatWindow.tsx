@@ -11,7 +11,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   action?: {
-    type: "create_poster" | "open_planner" | "consult_more" | "generate_image" | "content_planning" | "unknown";
+    type: "offer_poster" | "open_planner" | "consult_more" | "generate_image" | "offer_campaign" | "unknown";
     label: string;
     prompt?: string;
     description?: string;
@@ -54,13 +54,15 @@ export default function ChatWindow({ messages, onSendMessage, isTyping, onToggle
             <Menu className="w-6 h-6" />
           </button>
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-emerald-600 flex items-center justify-center text-white shadow-md">
-              <Bot className="w-6 h-6" />
-            </div>
+            <img 
+              src="/masanis.jpg" 
+              alt="Mas Anis" 
+              className="w-10 h-10 rounded-full object-cover shadow-md"
+            />
             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
           </div>
           <div>
-            <h3 className="font-bold text-secondary text-base leading-tight">LarisManis AI</h3>
+            <h3 className="font-bold text-secondary text-base leading-tight">LarisManis AI - Mas Anis</h3>
             <p className="text-xs text-green-600 font-medium flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
               Online

@@ -25,7 +25,7 @@ const createActionFromResponse = (action: "unknown" | "generate_image" | "conten
             };
         case "content_planning":
             return {
-                type: "content_planning" as const,
+                type: "offer_campaign" as const,
                 label: "Buka Content Planner",
                 description: "Klik untuk membuat jadwal konten",
             };
@@ -112,7 +112,7 @@ export default function ConsultPage() {
         setMessages([{
             id: "welcome",
             role: "assistant",
-            content: "Halo! Saya LarisManis AI. Ada yang bisa saya bantu untuk mengembangkan bisnismu hari ini?",
+            content: "Halo! Saya Mas Anis dan saya adalah Agen AI LarisManis. Ada yang bisa saya bantu untuk mengembangkan bisnismu hari ini?",
         }]);
 
         // Generate temp session ID

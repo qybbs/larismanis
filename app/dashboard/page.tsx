@@ -47,8 +47,18 @@ export default function Dashboard() {
 
             <div className="hidden lg:flex gap-4 pt-4">
               <div className="flex -space-x-4">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-secondary bg-gray-300" />
+                {[
+                  { letter: "L", bg: "bg-gradient-to-br from-rose-400 to-pink-500" },
+                  { letter: "M", bg: "bg-gradient-to-br from-amber-400 to-orange-500" },
+                  { letter: "A", bg: "bg-gradient-to-br from-emerald-400 to-teal-500" },
+                  { letter: "I", bg: "bg-gradient-to-br from-blue-400 to-indigo-500" },
+                ].map((item, i) => (
+                  <div 
+                    key={i} 
+                    className={`w-10 h-10 rounded-full border-2 border-white/80 ${item.bg} flex items-center justify-center text-white font-bold text-sm shadow-md`}
+                  >
+                    {item.letter}
+                  </div>
                 ))}
               </div>
               <p className="text-sm text-white/50 self-center">Dipercaya 1000+ UMKM</p>
@@ -141,7 +151,7 @@ export default function Dashboard() {
             </div>
 
             <footer className="pt-8 text-center lg:text-left">
-              <p className="text-xs text-secondary/30 font-medium">&copy; {new Date().getFullYear()} LarisManis. Growth Green Theme.</p>
+              <p className="text-xs text-secondary/30 font-medium">&copy; {new Date().getFullYear()} LarisManis.</p>
             </footer>
           </div>
         </motion.div>
