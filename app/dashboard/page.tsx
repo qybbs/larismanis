@@ -4,12 +4,13 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, Calendar, MessageSquare, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function Dashboard() {
   const router = useRouter();
 
   const handleLogout = async () => {
+    const supabase = getSupabaseBrowserClient();
     await supabase.auth.signOut();
     router.push("/");
   };

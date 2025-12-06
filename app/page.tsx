@@ -5,7 +5,7 @@ import { Sparkles, Loader2, Mail, Lock, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
+      const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -45,6 +46,7 @@ export default function LoginPage() {
     }
 
     try {
+      const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,

@@ -5,7 +5,7 @@ import { Sparkles, Loader2, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,10 +13,12 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
+      const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -38,6 +40,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -50,12 +53,13 @@ export default function RegisterPage() {
 
       if (error) throw error;
       
-      alert('Registration successful! Please check your email to verify your account.');
-      router.push("/");
+      setSuccessMessage("Registrasi Berhasil, silakan login");
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
     } catch (error) {
       console.error('Error registering:', error);
       alert('Error registering. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -205,6 +209,16 @@ export default function RegisterPage() {
                   )}
                 </button>
               </form>
+
+              {successMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-green-50 text-green-700 rounded-xl text-center font-medium border border-green-200"
+                >
+                  {successMessage}
+                </motion.div>
+              )}
             </div>
 
             <div className="text-center text-sm text-secondary/60">
