@@ -1,33 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ChatWindow, { Message } from "@/components/chat/ChatWindow";
 import ChatSidebar, { ChatSession } from "@/components/chat/ChatSidebar";
-import { ArrowLeft, MessageSquare, Plus } from "lucide-react";
+import { ArrowLeft, MessageSquare, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { getContextChatUser } from "@/lib/api";
-
-// Initial Data
-const INITIAL_SESSION_ID = "session-1";
-const INITIAL_SESSIONS: ChatSession[] = [
-    {
-        id: INITIAL_SESSION_ID,
-        title: "Strategi Penjualan",
-        date: new Date(),
-        preview: "Bagaimana cara meningkatkan omset..."
-    }
-];
-
-const INITIAL_MESSAGES: Record<string, Message[]> = {
-    [INITIAL_SESSION_ID]: [
-        {
-            id: "1",
-            role: "assistant",
-            content: "Halo! Saya LarisManis. Ada yang bisa saya bantu untuk meningkatkan penjualanmu hari ini?",
-        }
-    ]
-};
+import {
+    streamChatMessage,
+    fetchChatSession,
+    deleteChatSession,
+    getCurrentUserId,
+    type ChatMessage as DbChatMessage
+} from "@/lib/api";
 
 // Helper to create action based on backend response
 const createActionFromResponse = (action: "unknown" | "generate_image" | "content_planning") => {
@@ -49,60 +34,125 @@ const createActionFromResponse = (action: "unknown" | "generate_image" | "conten
     }
 };
 
+// Transform database messages to UI messages
+const transformDbMessagesToUi = (dbMessages: DbChatMessage[]): Message[] => {
+    return dbMessages.map((msg, index) => ({
+        id: `msg-${index}`,
+        role: msg.role,
+        content: msg.content,
+    }));
+};
+
+// Generate title from first user message
+const generateTitleFromMessages = (messages: DbChatMessage[]): string => {
+    const firstUserMsg = messages.find(m => m.role === 'user');
+    if (firstUserMsg) {
+        return firstUserMsg.content.slice(0, 25) + (firstUserMsg.content.length > 25 ? "..." : "");
+    }
+    return "Chat Session";
+};
+
 export default function ConsultPage() {
-    const [sessions, setSessions] = useState<ChatSession[]>(INITIAL_SESSIONS);
-    const [currentSessionId, setCurrentSessionId] = useState<string | null>(INITIAL_SESSION_ID);
-    const [messagesBySession, setMessagesBySession] = useState<Record<string, Message[]>>(INITIAL_MESSAGES);
+    const [sessions, setSessions] = useState<ChatSession[]>([]);
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [isTyping, setIsTyping] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
     const router = useRouter();
 
-    const currentMessages = currentSessionId ? (messagesBySession[currentSessionId] || []) : [];
+    // Load chat session on mount
+    useEffect(() => {
+        const loadSession = async () => {
+            setIsLoading(true);
+            try {
+                const userId = await getCurrentUserId();
+                if (!userId) {
+                    // Not logged in - show empty state
+                    setIsLoading(false);
+                    return;
+                }
 
-    const handleNewChat = () => {
-        const newSessionId = Date.now().toString();
-        const newSession: ChatSession = {
-            id: newSessionId,
-            title: "Chat Baru",
-            date: new Date(),
-            preview: "Mulai percakapan baru..."
+                const session = await fetchChatSession();
+
+                if (session && session.messages.length > 0) {
+                    // Transform to UI format
+                    const uiMessages = transformDbMessagesToUi(session.messages);
+                    setMessages(uiMessages);
+
+                    // Create session entry for sidebar
+                    const sessionEntry: ChatSession = {
+                        id: session.id,
+                        title: generateTitleFromMessages(session.messages),
+                        date: new Date(session.updated_at),
+                        preview: session.messages[session.messages.length - 1]?.content.slice(0, 50) || "",
+                    };
+                    setSessions([sessionEntry]);
+                    setCurrentSessionId(session.id);
+                } else {
+                    // No existing session - show welcome state
+                    setSessions([]);
+                    setCurrentSessionId(null);
+                }
+            } catch (err) {
+                console.error("Error loading session:", err);
+            } finally {
+                setIsLoading(false);
+            }
         };
 
-        setSessions(prev => [newSession, ...prev]);
-        setMessagesBySession(prev => ({
-            ...prev,
-            [newSessionId]: [{
-                id: "init",
-                role: "assistant",
-                content: "Halo! Ada yang bisa saya bantu?"
-            }]
-        }));
-        setCurrentSessionId(newSessionId);
-    };
+        loadSession();
+    }, []);
 
-    const handleDeleteSession = (id: string) => {
-        setSessions(prev => prev.filter(s => s.id !== id));
-        if (currentSessionId === id) {
+    const handleNewChat = useCallback(async () => {
+        // Clear current messages and start fresh
+        // The session will be created automatically when user sends first message
+        setMessages([{
+            id: "welcome",
+            role: "assistant",
+            content: "Halo! Saya LarisManis AI. Ada yang bisa saya bantu untuk mengembangkan bisnismu hari ini?",
+        }]);
+
+        // Generate temp session ID
+        const tempSessionId = `temp-${Date.now()}`;
+        const newSession: ChatSession = {
+            id: tempSessionId,
+            title: "Chat Baru",
+            date: new Date(),
+            preview: "Mulai percakapan baru...",
+        };
+
+        setSessions([newSession]);
+        setCurrentSessionId(tempSessionId);
+    }, []);
+
+    const handleDeleteSession = useCallback(async (id: string) => {
+        try {
+            await deleteChatSession();
+            setSessions([]);
+            setMessages([]);
             setCurrentSessionId(null);
+        } catch (err) {
+            console.error("Error deleting session:", err);
+            alert("Gagal menghapus chat. Silakan coba lagi.");
         }
-    };
+    }, []);
 
-    const handleSendMessage = async (content: string) => {
+    const handleSendMessage = useCallback(async (content: string) => {
         if (!currentSessionId) return;
 
+        const userMsgId = Date.now().toString();
         const userMsg: Message = {
-            id: Date.now().toString(),
+            id: userMsgId,
             role: "user",
             content: content
         };
 
-        // Update messages with user message
-        setMessagesBySession(prev => ({
-            ...prev,
-            [currentSessionId]: [...(prev[currentSessionId] || []), userMsg]
-        }));
+        // Add user message immediately
+        setMessages(prev => [...prev, userMsg]);
 
-        // Update session preview and title if it's "Chat Baru"
+        // Update session preview
         setSessions(prev => prev.map(s => {
             if (s.id === currentSessionId) {
                 return {
@@ -116,56 +166,77 @@ export default function ConsultPage() {
 
         setIsTyping(true);
 
-        try {
-            // Call real API
-            const response = await getContextChatUser(content);
+        // Create placeholder for assistant message
+        const assistantMsgId = (Date.now() + 1).toString();
+        const placeholderMsg: Message = {
+            id: assistantMsgId,
+            role: "assistant",
+            content: "",
+        };
 
-            if (response.success && response.data) {
-                const action = createActionFromResponse(response.data.action);
+        setMessages(prev => [...prev, placeholderMsg]);
+        setStreamingMessageId(assistantMsgId);
 
-                const aiMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    role: "assistant",
-                    content: response.data.geminiResponse,
-                    action: action,
-                };
-
-                setMessagesBySession(prev => ({
-                    ...prev,
-                    [currentSessionId]: [...(prev[currentSessionId] || []), aiMsg]
+        // Stream the response
+        await streamChatMessage(
+            content,
+            // onChunk - update message content progressively
+            (chunk) => {
+                setMessages(prev => prev.map(msg => {
+                    if (msg.id === assistantMsgId) {
+                        return { ...msg, content: msg.content + chunk };
+                    }
+                    return msg;
                 }));
-            } else {
-                throw new Error("Invalid response format");
-            }
-        } catch (err) {
-            console.error("Error getting chat response:", err);
+            },
+            // onComplete - add action if needed
+            (fullResponse, action) => {
+                const actionObj = createActionFromResponse(action);
+                setMessages(prev => prev.map(msg => {
+                    if (msg.id === assistantMsgId) {
+                        return { ...msg, content: fullResponse, action: actionObj };
+                    }
+                    return msg;
+                }));
+                setIsTyping(false);
+                setStreamingMessageId(null);
+            },
+            // onError
+            (error) => {
+                console.error("Stream error:", error);
 
-            let errorMessage = "Maaf, terjadi kesalahan. Silakan coba lagi.";
-
-            if (err instanceof Error) {
-                if (err.message.includes("Authentication required")) {
+                if (error.message.includes("Authentication required")) {
                     alert("Silakan login terlebih dahulu.");
                     router.push("/login");
-                    setIsTyping(false);
-                    return;
+                    // Remove the placeholder message
+                    setMessages(prev => prev.filter(msg => msg.id !== assistantMsgId));
+                } else {
+                    // Show error in the placeholder message
+                    setMessages(prev => prev.map(msg => {
+                        if (msg.id === assistantMsgId) {
+                            return { ...msg, content: `Maaf, terjadi kesalahan: ${error.message}` };
+                        }
+                        return msg;
+                    }));
                 }
-                errorMessage = `Maaf, terjadi kesalahan: ${err.message}`;
+
+                setIsTyping(false);
+                setStreamingMessageId(null);
             }
+        );
+    }, [currentSessionId, router]);
 
-            const errorAiMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                role: "assistant",
-                content: errorMessage,
-            };
-
-            setMessagesBySession(prev => ({
-                ...prev,
-                [currentSessionId]: [...(prev[currentSessionId] || []), errorAiMsg]
-            }));
-        } finally {
-            setIsTyping(false);
-        }
-    };
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    <p className="text-gray-500">Memuat riwayat chat...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background container-mobile flex flex-col h-screen overflow-hidden">
@@ -198,9 +269,9 @@ export default function ConsultPage() {
                 <div className="flex-1 h-full min-w-0">
                     {currentSessionId ? (
                         <ChatWindow
-                            messages={currentMessages}
+                            messages={messages}
                             onSendMessage={handleSendMessage}
-                            isTyping={isTyping}
+                            isTyping={isTyping && !streamingMessageId}
                             onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                         />
                     ) : (
@@ -208,9 +279,9 @@ export default function ConsultPage() {
                             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
                                 <MessageSquare className="w-10 h-10 text-gray-400" />
                             </div>
-                            <h3 className="text-xl font-bold text-secondary mb-2">Pilih Percakapan</h3>
+                            <h3 className="text-xl font-bold text-secondary mb-2">Mulai Konsultasi</h3>
                             <p className="text-gray-500 mb-8 max-w-xs mx-auto">
-                                Pilih riwayat chat dari sidebar atau mulai topik baru untuk diskusi.
+                                Tanyakan apapun tentang strategi bisnis, marketing, atau ide konten.
                             </p>
                             <button
                                 onClick={handleNewChat}
