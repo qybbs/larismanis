@@ -193,7 +193,7 @@ function GenerateContent() {
 
             console.log("Sending request to Edge Function...");
 
-            const response = await fetch("https://tybpzzlopbmayxqxghte.supabase.co/functions/v1/generateMarketingContent", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/generateMarketingContent`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${session.access_token}`,
@@ -295,7 +295,7 @@ function GenerateContent() {
                     >
                         {promptParam && (
                             <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-sm">
-                                <strong>Mode Konsultasi:</strong> Membuat poster berdasarkan saran: "{promptParam}"
+                                <strong>Mode Konsultasi:</strong> Membuat poster berdasarkan saran: &quot;{promptParam}&quot;
                             </div>
                         )}
                         <UploadZone onFileSelect={handleFileSelect} isProcessing={false} />
