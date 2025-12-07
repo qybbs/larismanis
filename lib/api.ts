@@ -150,7 +150,7 @@ export async function getContextChatUser(userInput: string): Promise<ChatRespons
 export async function streamChatMessage(
     userInput: string,
     onChunk: (text: string) => void,
-    onComplete: (fullResponse: string, action: "unknown" | "generate_image" | "content_planning") => void,
+    onComplete: (fullResponse: string, action: "unknown" | "generate_image" | "content_planning" | "offer_campaign" | "offer_poster" | "general_chat") => void,
     onError: (error: Error) => void
 ): Promise<void> {
     const token = await getAuthToken();
@@ -178,7 +178,7 @@ export async function streamChatMessage(
         }
 
         // Get action from header
-        const actionIntent = response.headers.get('X-Action-Intent') as "unknown" | "generate_image" | "content_planning" || "unknown";
+        const actionIntent = response.headers.get('X-Action-Intent') as "unknown" | "generate_image" | "content_planning" | "offer_campaign" | "offer_poster" | "general_chat" || "unknown";
 
         // Read the stream
         const reader = response.body?.getReader();

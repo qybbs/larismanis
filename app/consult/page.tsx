@@ -15,7 +15,7 @@ import {
 } from "@/lib/api";
 
 // Helper to create action based on backend response
-const createActionFromResponse = (action: "unknown" | "generate_image" | "content_planning") => {
+const createActionFromResponse = (action: "unknown" | "generate_image" | "content_planning" | "offer_campaign" | "offer_poster" | "general_chat") => {
     switch (action) {
         case "generate_image":
             return {
@@ -23,7 +23,19 @@ const createActionFromResponse = (action: "unknown" | "generate_image" | "conten
                 label: "Buat Konten Visual",
                 description: "Klik untuk membuat poster/gambar iklan",
             };
+        case "offer_poster":
+            return {
+                type: "generate_image" as const,
+                label: "Buat Konten Visual",
+                description: "Klik untuk membuat poster/gambar iklan",
+            };
         case "content_planning":
+            return {
+                type: "offer_campaign" as const,
+                label: "Buka Content Planner",
+                description: "Klik untuk membuat jadwal konten",
+            };
+        case "offer_campaign":
             return {
                 type: "offer_campaign" as const,
                 label: "Buka Content Planner",
@@ -195,6 +207,15 @@ export default function ConsultPage() {
             // onComplete - add action if needed
             (fullResponse, action) => {
                 console.log("stream complete", { fullResponse, action });
+                if (
+                    fullResponse.toLowerCase().includes("magic")
+                    || fullResponse.toLowerCase().includes("content")
+                    || fullResponse.toLowerCase().includes("generator")
+                ) action = "offer_poster";
+                if (
+                    fullResponse.toLowerCase().includes("campaign")
+                    || fullResponse.toLowerCase().includes("planner")
+                ) action = "offer_campaign";
                 const actionObj = createActionFromResponse(action);
                 setMessages(prev => prev.map(msg => {
                     if (msg.id === assistantMsgId) {
