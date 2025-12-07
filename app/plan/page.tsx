@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CategoryInput from "@/components/plan/CategoryInput";
 import CalendarView, { PlanItem } from "@/components/plan/CalendarView";
@@ -74,7 +74,6 @@ export default function PlanPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     
     const router = useRouter();
-    const searchParams = useSearchParams();
 
     // Get unique business types from plans
     const uniqueBusinessTypes = useMemo(() => {
@@ -107,13 +106,17 @@ export default function PlanPage() {
         loadExistingPlans();
     }, []);
 
-    // Auto-fill category from URL param on mount
-    useEffect(() => {
-        const paramCategory = searchParams.get("category");
-        if (paramCategory) {
-            setCategory(paramCategory);
-        }
-    }, [searchParams]);
+    // Component to read `searchParams` inside a Suspense boundary
+    function SearchParamCategory({ setCategory }: { setCategory: (c: string) => void }) {
+        const searchParams = useSearchParams();
+        useEffect(() => {
+            const paramCategory = searchParams.get("category");
+            if (paramCategory) {
+                setCategory(paramCategory);
+            }
+        }, [searchParams, setCategory]);
+        return null;
+    }
 
     const handleGenerate = async (cat: string) => {
         setCategory(cat);
@@ -364,6 +367,9 @@ export default function PlanPage() {
                 </header>
 
                 <main>
+                    <Suspense fallback={null}>
+                        <SearchParamCategory setCategory={setCategory} />
+                    </Suspense>
                     <AnimatePresence mode="wait">
                         {showOnboarding && !showCategoryInput && !isLoading && (
                             <motion.div
