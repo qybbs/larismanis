@@ -193,7 +193,7 @@ function GenerateContent() {
 
             console.log("Sending request to Edge Function...");
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/generateMarketingContent`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/generateMarketingContent`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${session.access_token}`,

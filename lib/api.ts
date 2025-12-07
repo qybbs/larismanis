@@ -1,6 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 // ========== Types ==========
 
