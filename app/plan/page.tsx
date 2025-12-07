@@ -19,7 +19,7 @@ import {
     parseDateDDMMYYYY, 
     fetchContentPlans,
     saveContentPlan,
-    saveMultipleContentPlans,
+    // saveMultipleContentPlans,
     deleteContentPlan,
     type ContentPlan,
     type ContentPlanInput,
@@ -116,28 +116,13 @@ export default function PlanPage() {
 
             if (response.success && response.data?.contentPlans?.plans) {
                 const planItems = transformContentPlansToPlanItems(response.data.contentPlans.plans, cat);
-                
-                // Save generated plans to database
-                const plansToSave: ContentPlanInput[] = planItems.map(item => ({
-                    date: item.date,
-                    theme: item.theme,
-                    content_type: item.content_type,
-                    visual_idea: item.visual_idea,
-                    caption_hook: item.caption_hook,
-                    platform: item.platform,
-                    category: item.category || "Promosi",
-                }));
 
                 try {
-                    const savedPlans = await saveMultipleContentPlans(plansToSave);
-                    const savedPlanItems = transformFlattenedToPlanItems(savedPlans);
-                    
-                    // Merge with existing plans
                     setPlan(prev => {
                         if (prev) {
-                            return [...prev, ...savedPlanItems];
+                            return [...prev, ...planItems];
                         }
-                        return savedPlanItems;
+                        return planItems;
                     });
                 } catch (saveErr) {
                     console.error("Error saving generated plans:", saveErr);
@@ -184,27 +169,13 @@ export default function PlanPage() {
 
             if (response.success && response.data?.contentPlans?.plans) {
                 const planItems = transformContentPlansToPlanItems(response.data.contentPlans.plans, businessType);
-                
-                // Save generated plans to database
-                const plansToSave: ContentPlanInput[] = planItems.map(item => ({
-                    date: item.date,
-                    theme: item.theme,
-                    content_type: item.content_type,
-                    visual_idea: item.visual_idea,
-                    caption_hook: item.caption_hook,
-                    platform: item.platform,
-                    category: item.category || "Promosi",
-                }));
 
                 try {
-                    const savedPlans = await saveMultipleContentPlans(plansToSave, businessType);
-                    const savedPlanItems = transformFlattenedToPlanItems(savedPlans);
-                    
                     setPlan(prev => {
                         if (prev) {
-                            return [...prev, ...savedPlanItems];
+                            return [...prev, ...planItems];
                         }
-                        return savedPlanItems;
+                        return planItems;
                     });
                 } catch (saveErr) {
                     console.error("Error saving generated plans:", saveErr);
@@ -443,7 +414,10 @@ export default function PlanPage() {
                                             <div className="relative">
                                                 <select
                                                     value={selectedBusinessType}
-                                                    onChange={(e) => setSelectedBusinessType(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setSelectedBusinessType(e.target.value)
+                                                        setCategory(e.target.value);
+                                                    }}
                                                     className="appearance-none text-sm bg-white px-4 py-2 pr-8 rounded-full border border-gray-200 hover:border-emerald-300 transition-colors text-secondary font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                                                 >
                                                     <option value="all">Semua Kategori</option>

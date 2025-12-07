@@ -1,6 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 // ========== Types ==========
 
@@ -62,7 +62,7 @@ function formatDateDDMMYYYY(date: Date): string {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    return `${day}${month}${year}`;
+    return `${day}-${month}-${year}`;
 }
 
 export function parseDateDDMMYYYY(dateStr: string): Date {
@@ -421,56 +421,56 @@ export async function saveContentPlan(plan: ContentPlanInput, businessType?: str
     };
 }
 
-export async function saveMultipleContentPlans(plans: ContentPlanInput[], businessType?: string): Promise<FlattenedPlanItem[]> {
-    const supabase = getSupabaseBrowserClient();
-    const userId = await getCurrentUserId();
+// export async function saveMultipleContentPlans(plans: ContentPlanInput[], businessType?: string): Promise<FlattenedPlanItem[]> {
+//     const supabase = getSupabaseBrowserClient();
+//     const userId = await getCurrentUserId();
 
-    if (!userId) {
-        throw new Error("Not authenticated");
-    }
+//     if (!userId) {
+//         throw new Error("Not authenticated");
+//     }
 
-    // Group plans into single row with multiple plans
-    const planDataItems: ContentPlan[] = plans.map(plan => ({
-        date: formatDateDDMMYYYY(plan.date),
-        theme: plan.theme,
-        content_type: plan.content_type,
-        visual_idea: plan.visual_idea,
-        caption_hook: plan.caption_hook,
-        platform: plan.platform,
-    }));
+//     // Group plans into single row with multiple plans
+//     const planDataItems: ContentPlan[] = plans.map(plan => ({
+//         date: formatDateDDMMYYYY(plan.date),
+//         theme: plan.theme,
+//         content_type: plan.content_type,
+//         visual_idea: plan.visual_idea,
+//         caption_hook: plan.caption_hook,
+//         platform: plan.platform,
+//     }));
 
-    const insertRow = {
-        user_id: userId,
-        business_type: businessType || plans[0]?.category || "Generated",
-        plan_data: {
-            plans: planDataItems
-        }
-    };
+//     const insertRow = {
+//         user_id: userId,
+//         business_type: businessType || plans[0]?.category || "Generated",
+//         plan_data: {
+//             plans: planDataItems
+//         }
+//     };
 
-    const { data, error } = await supabase
-        .from('content_plans')
-        .insert(insertRow as never)
-        .select()
-        .single();
+//     const { data, error } = await supabase
+//         .from('content_plans')
+//         .insert(insertRow as never)
+//         .select()
+//         .single();
 
-    if (error) {
-        console.error("Error saving content plans:", error);
-        throw new Error("Failed to save content plans");
-    }
+//     if (error) {
+//         console.error("Error saving content plans:", error);
+//         throw new Error("Failed to save content plans");
+//     }
 
-    const row = data as unknown as DbContentPlanRow;
-    return plans.map((plan, index) => ({
-        id: `${row.id}-${index}`,
-        rowId: row.id,
-        date: plan.date,
-        theme: plan.theme,
-        content_type: plan.content_type,
-        visual_idea: plan.visual_idea,
-        caption_hook: plan.caption_hook,
-        platform: plan.platform,
-        category: row.business_type,
-    }));
-}
+//     const row = data as unknown as DbContentPlanRow;
+//     return plans.map((plan, index) => ({
+//         id: `${row.id}-${index}`,
+//         rowId: row.id,
+//         date: plan.date,
+//         theme: plan.theme,
+//         content_type: plan.content_type,
+//         visual_idea: plan.visual_idea,
+//         caption_hook: plan.caption_hook,
+//         platform: plan.platform,
+//         category: row.business_type,
+//     }));
+// }
 
 export async function deleteContentPlan(compositeId: string): Promise<void> {
     const supabase = getSupabaseBrowserClient();
