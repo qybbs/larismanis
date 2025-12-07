@@ -28,7 +28,7 @@ LarisManis hadir untuk **mengdemokratisasi marketing digital** - siapapun bisa p
 ## 💎 Fitur Unggulan
 
 ### 🎨 **Magic Content Generator**
-<img width="1512" height="982" alt="Screenshot 2025-12-07 at 21 36 57" src="https://github.com/user-attachments/assets/7bc67580-7464-4057-87ea-ac589db4b6c6" />
+<img width="1512" height="982" alt="Screenshot 2025-12-07 at 21 48 34" src="https://github.com/user-attachments/assets/b7bc5a5a-628d-4d52-a174-bbfb911d02a9" />
 > *"Ubah foto biasa jadi iklan profesional dalam hitungan detik!"*
 
 **Untuk siapa?**
