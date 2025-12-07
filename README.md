@@ -28,6 +28,7 @@ LarisManis hadir untuk **mengdemokratisasi marketing digital** - siapapun bisa p
 ## 💎 Fitur Unggulan
 
 ### 🎨 **Magic Content Generator**
+<img width="1512" height="982" alt="Screenshot 2025-12-07 at 21 48 34" src="https://github.com/user-attachments/assets/b7bc5a5a-628d-4d52-a174-bbfb911d02a9" />
 > *"Ubah foto biasa jadi iklan profesional dalam hitungan detik!"*
 
 **Untuk siapa?**
@@ -64,6 +65,7 @@ LarisManis hadir untuk **mengdemokratisasi marketing digital** - siapapun bisa p
 ---
 
 ### 📅 **Campaign Planner**
+<img width="1512" height="982" alt="Screenshot 2025-12-07 at 21 37 37" src="https://github.com/user-attachments/assets/059086bf-14c2-4629-885f-4e3521ed35f2" />
 > *"Jadwal konten seminggu penuh dalam 30 detik!"*
 
 **Untuk siapa?**
@@ -92,6 +94,7 @@ LarisManis hadir untuk **mengdemokratisasi marketing digital** - siapapun bisa p
 ---
 
 ### 💬 **AI Consultant - Mas Anis**
+<img width="1512" height="982" alt="Screenshot 2025-12-07 at 21 38 25" src="https://github.com/user-attachments/assets/afa40c91-2761-4d61-8104-1b82c9d0acf2" />
 > *"Tanya apa saja tentang bisnis, dapat solusi langsung!"*
 
 **Untuk siapa?**
