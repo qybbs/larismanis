@@ -408,7 +408,6 @@ export default function PlanPage() {
                                 className="space-y-4 md:space-y-6"
                             >
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-2">
-                                    {/* Left side - Filter dropdown */}
                                     <div className="flex items-center gap-2 flex-wrap">
                                         {uniqueBusinessTypes.length > 0 && (
                                             <div className="relative">
@@ -435,7 +434,6 @@ export default function PlanPage() {
                                             </div>
                                         )}
                                     </div>
-                                    {/* Right side - Add new category button */}
                                     <button
                                         onClick={() => setShowCategoryInput(true)}
                                         className="text-sm text-white hover:bg-emerald-600 transition-colors flex items-center gap-2 bg-primary px-4 py-2 rounded-full shadow-md hover:shadow-lg"
@@ -471,8 +469,6 @@ export default function PlanPage() {
                     </AnimatePresence>
                 </main>
             </div>
-
-            {/* Add Plan Modal */}
             <AddPlanModal
                 isOpen={isModalOpen}
                 date={selectedDate}
@@ -480,8 +476,6 @@ export default function PlanPage() {
                 onSubmit={handleAddPlan}
                 isLoading={isSaving}
             />
-
-            {/* Generate Choice Modal */}
             <GenerateModal
                 isOpen={isGenerateModalOpen}
                 date={selectedDate}
@@ -490,8 +484,6 @@ export default function PlanPage() {
                 onGenerateAI={handleGenerateAI}
                 onAddManual={handleManualAdd}
             />
-
-            {/* Delete Confirmation Modal */}
             <DeleteConfirmModal
                 isOpen={deleteModalOpen}
                 itemName={planToDelete?.theme || planToDelete?.visual_idea?.substring(0, 30) || "Konten ini"}
