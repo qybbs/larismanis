@@ -472,7 +472,7 @@ function GenerateContent() {
                                     <p className="text-sm text-gray-600">Buat jadwal posting otomatis untuk maksimalkan engagement.</p>
                                 </div>
                                 <Link
-                                    href={`/plan?category=${encodeURIComponent(result.description)}`}
+                                    href={`/plan`}
                                     className="w-full sm:w-auto bg-primary text-white font-bold px-6 py-3 rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                                 >
                                     Buka Planner
@@ -549,8 +549,8 @@ function GenerateContent() {
                                             }}
                                             className="flex-1 bg-white border-2 border-primary text-primary font-bold py-3 rounded-xl hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <Copy className="w-5 h-5" />
-                                            Copy Caption
+                                            {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                            {copied ? "Tersalin!" : "Copy Caption"}
                                         </button>
                                         <button
                                             onClick={() => handleDownloadHistory(selectedGeneration.generated_image_url, "larismanis-poster.jpg")}
@@ -578,7 +578,7 @@ function GenerateContent() {
                                                     <p className="text-xs text-gray-600">Buat jadwal posting otomatis untuk maksimalkan engagement.</p>
                                                 </div>
                                                 <Link
-                                                    href={`/plan?category=${encodeURIComponent(selectedGeneration.description || selectedGeneration.caption)}`}
+                                                    href={`/plan`}
                                                     className="w-full sm:w-auto bg-primary text-white font-bold px-5 py-2.5 rounded-lg hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg text-sm"
                                                 >
                                                     Buka Planner

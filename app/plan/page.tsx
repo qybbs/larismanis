@@ -106,18 +106,6 @@ export default function PlanPage() {
         loadExistingPlans();
     }, []);
 
-    // Component to read `searchParams` inside a Suspense boundary
-    function SearchParamCategory({ setCategory }: { setCategory: (c: string) => void }) {
-        const searchParams = useSearchParams();
-        useEffect(() => {
-            const paramCategory = searchParams.get("category");
-            if (paramCategory) {
-                setCategory(paramCategory);
-            }
-        }, [searchParams, setCategory]);
-        return null;
-    }
-
     const handleGenerate = async (cat: string) => {
         setCategory(cat);
         setIsLoading(true);
@@ -367,9 +355,6 @@ export default function PlanPage() {
                 </header>
 
                 <main>
-                    <Suspense fallback={null}>
-                        <SearchParamCategory setCategory={setCategory} />
-                    </Suspense>
                     <AnimatePresence mode="wait">
                         {showOnboarding && !showCategoryInput && !isLoading && (
                             <motion.div
